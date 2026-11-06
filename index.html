@@ -1,0 +1,2885 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DELICIELO - POS & Management System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F2F3EE; color: #2C352B; }
+    .font-luxury { font-family: 'Playfair Display', serif; }
+    .card-borderless { background: #FFFFFF; border: 1px solid #E5E7EB; box-shadow: 0 4px 20px -2px rgba(44, 53, 43, 0.05); }
+    .card-active { background: #FAF7EE; border: 2px solid #C5A059; box-shadow: 0 4px 20px -2px rgba(197, 160, 89, 0.15); }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .var-active { background: #7D8F7B; color: white; font-weight: 700; }
+    .var-inactive { background: #F4F3EE; color: #5A6558; }
+    .var-has-qty { background: #E5C888; color: #2C352B; font-weight: 700; }
+    .text-brass { color: #8F6B2D; }
+    .bg-brass { background-color: #8F6B2D; }
+
+    /* Tampilan Invoice Artisan Sage Green Delicielo */
+    /* ================= INVOICE MODERN SAGE (SESUAI GAMBAR REFERENSI) ================= */
+    .invoice-sheet {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      background: #FDFCF7;
+      color: #354233;
+      padding: 36px 30px;
+      border: 1.5px solid #CBD5C8;
+      border-radius: 12px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    }
+    .inv-hero-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: #3E4D3C;
+      line-height: 1;
+    }
+    .inv-input-line {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #3E4D3C;
+      outline: none;
+      color: #354233;
+      font-family: inherit;
+      padding: 1px 4px;
+    }
+    .inv-grid-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    .inv-grid-table th {
+      border: 1.5px solid #3E4D3C;
+      padding: 7px 6px;
+      font-weight: 800;
+      color: #3E4D3C;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .inv-grid-table td {
+      border: 1.5px solid #3E4D3C;
+      padding: 6px 8px;
+      vertical-align: middle;
+    }
+    .inv-calc-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 3px 0;
+      font-size: 11px;
+      border-bottom: 1px solid #3E4D3C;
+    }
+
+    @media print {
+      body * { visibility: hidden; }
+      #invoicePrintArea, #invoicePrintArea * { visibility: visible; }
+      #invoicePrintArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 12mm !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: #FFFFFF !important;
+      }
+      .no-print { display: none !important; }
+      .inv-input-line { border-bottom: none !important; padding: 0 !important; }
+    }
+      </style>
+</head>
+<body class="max-w-md mx-auto min-h-screen pb-40 relative bg-[#F2F3EE] shadow-2xl">
+
+  <!-- ================= SIDEBAR DRAWER ================= -->
+  <div id="sideDrawerOverlay" onclick="toggleDrawer(false)" class="fixed inset-0 bg-black/50 z-50 hidden transition-opacity"></div>
+  <aside id="sideDrawer" class="fixed top-0 left-0 bottom-0 w-72 bg-white z-50 transform -translate-x-full transition-transform duration-300 shadow-2xl flex flex-col justify-between">
+    <div>
+      <div class="bg-[#849382] text-white p-5 flex items-center justify-between">
+        <div>
+          <h2 class="font-luxury text-lg font-bold tracking-widest">DELICIELO</h2>
+          <p class="text-[10px] text-white/80">POS &amp; Management System</p>
+        </div>
+        <button onclick="toggleDrawer(false)" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold cursor-pointer">✕</button>
+      </div>
+
+      <!-- Status Hak Akses -->
+      <div class="p-4 bg-[#F8F7F3] border-b border-gray-100 flex items-center justify-between">
+        <div>
+          <span class="text-[9px] uppercase tracking-wider text-gray-400 block font-bold">Status Akses:</span>
+          <span id="roleBadgeText" class="text-xs font-black text-[#5A6558]">GUEST (Staf Dapur)</span>
+        </div>
+        <button id="btnDrawerAuth" onclick="handleAuthClick()" class="bg-[#849382] hover:bg-[#6E7E6A] text-white px-2.5 py-1 rounded-xl text-[10px] font-bold cursor-pointer">Login Admin</button>
+      </div>
+
+      <nav class="p-4 space-y-1.5 text-xs font-semibold">
+        <button onclick="navigateTab('pos')" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-2xl hover:bg-[#F2F3EE] text-[#2C352B] transition cursor-pointer">
+          <span class="text-base">🛍️</span>
+          <span>POS (Kasir)</span>
+        </button>
+        <button onclick="navigateTab('plan')" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-2xl hover:bg-[#F2F3EE] text-[#2C352B] transition cursor-pointer">
+          <span class="text-base">📋</span>
+          <span>Cek Bahan Baku</span>
+        </button>
+        <button id="drawerBtnProducts" onclick="navigateTab('products')" class="admin-only w-full hidden items-center space-x-3 px-3.5 py-3 rounded-2xl hover:bg-[#F2F3EE] text-[#2C352B] transition cursor-pointer" style="display: none;">
+          <span class="text-base">⚙️</span>
+          <span>Produk &amp; Resep Bahan</span>
+        </button>
+        <button id="drawerBtnInventory" onclick="navigateTab('inventory')" class="admin-only w-full hidden items-center space-x-3 px-3.5 py-3 rounded-2xl hover:bg-[#F2F3EE] text-[#2C352B] transition cursor-pointer" style="display: none;">
+          <span class="text-base">📦</span>
+          <span>Inventory (Stok &amp; Supplier)</span>
+        </button>
+        <button id="drawerBtnFinance" onclick="navigateTab('finance')" class="admin-only w-full hidden items-center space-x-3 px-3.5 py-3 rounded-2xl hover:bg-[#F2F3EE] text-[#2C352B] transition cursor-pointer" style="display: none;">
+          <span class="text-base">💰</span>
+          <span>Laporan Keuangan &amp; HPP</span>
+        </button>
+        <button onclick="navigateTab('struk')" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-2xl hover:bg-[#F2F3EE] text-[#2C352B] transition cursor-pointer">
+          <span class="text-base">🧾</span>
+          <span>Struk &amp; Printer</span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="p-4 border-t border-gray-100 text-center">
+      <p class="text-[10px] text-gray-400">Delicielo</p>
+      <p class="text-[10px] text-brass font-bold">Jatiasih, Bekasi</p>
+    </div>
+  </aside>
+
+  <!-- ================= TOP HEADER ================= -->
+  <header class="bg-[#849382] text-white sticky top-0 z-30 shadow-md">
+    <div class="flex items-center justify-between px-5 pt-4 pb-3">
+      <button onclick="toggleDrawer(true)" title="Menu Navigasi" class="text-white hover:text-[#FAF6EE] cursor-pointer text-xl font-bold flex items-center justify-center w-8 h-8 rounded-lg active:bg-white/10">☰</button>
+      <h1 class="font-luxury text-xl font-bold tracking-[0.22em] text-[#F9F6F0]">DELICIELO</h1>
+      <button onclick="navigateTab('struk')" title="Struk Transaksi" class="text-white hover:text-[#FAF6EE] cursor-pointer text-lg flex items-center justify-center w-8 h-8 rounded-lg active:bg-white/10">🧾</button>
+    </div>
+
+    <!-- Quick Switcher Tabs -->
+    <div id="quickNavTabs" class="grid grid-cols-2 text-center bg-[#768574] text-[11px] font-semibold border-t border-white/10">
+      <button id="t-pos" onclick="navigateTab('pos')" class="py-2.5 text-white border-b-2 border-[#E5C888] cursor-pointer">Kasir</button>
+      <button id="t-plan" onclick="navigateTab('plan')" class="py-2.5 text-white/70 border-b-2 border-transparent cursor-pointer">Bahan</button>
+      <button id="t-products" onclick="navigateTab('products')" class="admin-only hidden py-2.5 text-white/70 border-b-2 border-transparent cursor-pointer" style="display: none;">Produk</button>
+      <button id="t-inventory" onclick="navigateTab('inventory')" class="admin-only hidden py-2.5 text-white/70 border-b-2 border-transparent cursor-pointer" style="display: none;">Inventory</button>
+      <button id="t-finance" onclick="navigateTab('finance')" class="admin-only hidden py-2.5 text-white/70 border-b-2 border-transparent cursor-pointer" style="display: none;">Keuangan</button>
+    </div>
+  </header>
+
+  <!-- ================= TAB 1: KASIR POS ================= -->
+  <main id="sec-pos" class="p-4 space-y-3.5">
+    <div id="subCategoryBar" class="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1"></div>
+
+    <div class="flex items-center justify-between pt-0.5 pb-1 border-b border-[#E2E4DC]">
+      <div class="flex items-center space-x-2">
+        <span id="activeSubCatLabel" class="text-[11px] font-bold text-[#3B443A] bg-white px-3 py-1 rounded-full shadow-xs">Semua Menu</span>
+        <button onclick="resetPos()" type="button" class="text-[10px] font-bold text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-full border border-red-200 cursor-pointer">
+          🔄 Reset POS
+        </button>
+      </div>
+      <div class="flex items-center space-x-2">
+        <span class="text-[11px] font-semibold text-[#5A6558]">Pesanan Aktif</span>
+        <button id="toggleActiveBtn" onclick="toggleActiveOrdersOnly()" type="button" class="w-11 h-6 rounded-full bg-[#D5D8CE] p-0.5 flex items-center cursor-pointer shadow-inner transition-colors duration-200">
+          <div id="toggleCircle" class="w-5 h-5 rounded-full bg-white shadow-md transform transition-transform duration-200"></div>
+        </button>
+      </div>
+    </div>
+
+    <div id="posBtBanner" class="hidden bg-[#EAE8DF] text-[#4A5647] px-3.5 py-2 rounded-2xl text-[11px] font-semibold flex items-center justify-between shadow-xs">
+      <span id="posBtStatusText">Printer siap</span>
+      <button onclick="document.getElementById('posBtBanner').classList.add('hidden')" class="text-xs font-bold text-gray-500">✕</button>
+    </div>
+
+    <div id="posGridContainer" class="grid grid-cols-2 gap-3.5 pt-1"></div>
+  </main>
+
+  <!-- ================= TAB 2: BAHAN BAKU & PACKAGING ================= -->
+  <main id="sec-plan" class="p-4 space-y-4 hidden">
+    <div class="card-borderless p-4 rounded-3xl space-y-3">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-sm text-[#2C352B]">Target Produksi</h3>
+          <p class="text-[10px] text-gray-400">Sinkron otomatis dengan pesanan Kasir</p>
+        </div>
+        <button onclick="resetPlan()" type="button" class="text-[11px] font-bold text-brass bg-[#F4EFE4] px-3 py-1.5 rounded-xl cursor-pointer">
+          Reset Target
+        </button>
+      </div>
+
+      <!-- SEARCH BAR -->
+      <div class="relative">
+        <input type="text" id="prodSearchInput" oninput="filterProductionInputs()" placeholder="🔍 Cari nama menu cepat (cth: Taichan, Sandwich)..." 
+          class="w-full p-2.5 pl-3 bg-[#F6F5F0] rounded-2xl text-xs font-semibold outline-none border border-gray-200 focus:border-brass">
+      </div>
+
+      <!-- FILTER KATEGORI -->
+      <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5">
+        <button onclick="setPlanCategory('all')" id="pcat_all" class="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold bg-[#7D8F7B] text-white cursor-pointer transition">All</button>
+        <button onclick="setPlanCategory('tea')" id="pcat_tea" class="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold bg-white text-[#5A6558] cursor-pointer transition">Tea</button>
+        <button onclick="setPlanCategory('coffee')" id="pcat_coffee" class="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold bg-white text-[#5A6558] cursor-pointer transition">Coffee</button>
+        <button onclick="setPlanCategory('noncoffee')" id="pcat_noncoffee" class="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold bg-white text-[#5A6558] cursor-pointer transition">Non-Coffee</button>
+        <button onclick="setPlanCategory('makanan')" id="pcat_makanan" class="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold bg-white text-[#5A6558] cursor-pointer transition">Snacks</button>
+        <button onclick="setPlanCategory('custom')" id="pcat_custom" class="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold bg-white text-[#5A6558] cursor-pointer transition">Custom</button>
+      </div>
+
+      <!-- CONTAINER INPUT TARGET PRODUKSI -->
+      <div id="targetInputsContainer" class="space-y-2.5 max-h-64 overflow-y-auto no-scrollbar pr-1"></div>
+      
+      <p id="totalSummaryDisplay" class="text-[11px] text-[#52604E] text-center font-bold pt-1 leading-relaxed">
+        Total pesanan: 0 item
+      </p>
+    </div>
+
+    <div class="space-y-1.5">
+      <span class="text-[10px] font-bold uppercase text-[#52604E] tracking-wider px-1">Menu Terpilih Untuk Dicek Bahannya:</span>
+      <div id="filterButtonGroup" class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-1 min-h-[36px]"></div>
+    </div>
+
+    <div class="card-borderless p-5 rounded-3xl space-y-3">
+      <div class="flex justify-between items-center pb-2 border-b border-gray-100">
+        <div>
+          <h3 id="ingredientTitle" class="font-bold text-sm text-[#2C352B]">Rincian Kebutuhan Bahan</h3>
+          <p id="ingredientSubtitle" class="text-[10px] text-gray-400">Termasuk bahan mentah & packaging kemasan</p>
+        </div>
+        <span id="ingredientBadge" class="text-[10px] bg-brass text-white font-bold px-2.5 py-0.5 rounded-full">Semua Menu</span>
+      </div>
+
+      <div id="ingredientsList" class="space-y-4 text-xs"></div>
+    </div>
+
+    <button id="btnWa" onclick="shareWhatsApp()" type="button" class="w-full bg-[#52735B] hover:bg-[#415E49] text-white py-3.5 rounded-2xl font-bold text-xs shadow-md flex items-center justify-center space-x-2 transition active:scale-95 cursor-pointer">
+      <span>📲 Kirim Rincian Bahan ke WhatsApp</span>
+    </button>
+  </main>
+
+  <!-- ================= TAB 3: PRODUK & RESEP ================= -->
+  <main id="sec-products" class="hidden p-4 space-y-4">
+    <div class="card-borderless p-4 rounded-3xl flex justify-between items-center">
+      <div>
+        <h3 class="font-bold text-sm text-[#2C352B]">Pengaturan Menu &amp; Resep</h3>
+        <p class="text-[10px] text-gray-400">Sesuaikan takaran komposisi bahan dasar</p>
+      </div>
+      <button onclick="openProductModal()" class="bg-brass text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-xs cursor-pointer">
+        + Menu Baru
+      </button>
+    </div>
+    <div id="productsManageList" class="space-y-3"></div>
+  </main>
+
+  <!-- ================= TAB 4: INVENTORY / STOK & SUPPLIER ================= -->
+  <main id="sec-inventory" class="hidden p-4 space-y-4">
+    <div class="card-borderless p-4 rounded-3xl space-y-2">
+      <div class="flex justify-between items-center">
+        <div>
+          <h3 class="font-bold text-sm text-[#2C352B]">Manajemen Stok &amp; Pengadaan</h3>
+          <p class="text-[10px] text-gray-400">Harga bahan baku otomatis terhubung ke perhitungan HPP</p>
+        </div>
+        <button onclick="openStockModal()" class="bg-[#849382] text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-xs cursor-pointer">
+          ✏️ Update Stok &amp; Supplier
+        </button>
+      </div>
+    </div>
+
+    <div class="card-borderless p-4 rounded-3xl space-y-3">
+      <h4 class="font-bold text-xs text-[#2C352B] border-b border-gray-100 pb-2">Database Bahan, Harga &amp; Supplier</h4>
+      <div id="inventoryTableList" class="divide-y divide-[#EFECE6] text-xs"></div>
+    </div>
+  </main>
+
+  <!-- ================= TAB 5: KEUANGAN ================= -->
+  <main id="sec-finance" class="hidden p-4 space-y-4">
+    <div class="grid grid-cols-2 gap-3">
+      <div class="card-borderless p-4 rounded-2xl">
+        <span class="text-[9px] uppercase tracking-wider font-bold text-gray-400">Total Omzet Penjualan</span>
+        <div id="finRevenueDisplay" class="text-base font-black text-[#2C352B] mt-1">Rp 0</div>
+      </div>
+      <div class="card-borderless p-4 rounded-2xl">
+        <span class="text-[9px] uppercase tracking-wider font-bold text-red-500">Total HPP Modal Bahan</span>
+        <div id="finHppDisplay" class="text-base font-black text-red-600 mt-1">Rp 0</div>
+      </div>
+      <div class="card-borderless p-4 rounded-2xl">
+        <span class="text-[9px] uppercase tracking-wider font-bold text-green-600">Estimasi Laba Kotor</span>
+        <div id="finProfitDisplay" class="text-base font-black text-green-700 mt-1">Rp 0</div>
+      </div>
+      <div class="card-borderless p-4 rounded-2xl">
+        <span class="text-[9px] uppercase tracking-wider font-bold text-brass">Margin Laba</span>
+        <div id="finMarginDisplay" class="text-base font-black text-brass mt-1">0%</div>
+      </div>
+    </div>
+
+    <div class="card-borderless p-4 rounded-3xl space-y-2">
+      <h4 class="font-bold text-xs text-[#2C352B] border-b pb-2">Riwayat Transaksi POS</h4>
+      <div id="financeHistoryList" class="space-y-2 max-h-80 overflow-y-auto no-scrollbar text-xs">
+        <p class="text-center text-gray-400 py-4">Belum ada transaksi yang diselesaikan.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- ================= TAB 6: STRUK & PRINTER ================= -->
+  <main id="sec-struk" class="hidden p-4 space-y-4">
+    <div id="receiptPrintArea" class="card-borderless p-6 rounded-3xl relative">
+      <div class="text-center pb-3 border-b border-dashed border-gray-300">
+        <h2 class="font-luxury text-2xl font-bold text-brass tracking-widest">DELICIELO</h2>
+        
+      </div>
+
+      <div class="text-xs text-gray-600 py-2.5 border-b border-dashed border-gray-300 space-y-1">
+        <div class="flex justify-between"><span>No. Transaksi:</span><span id="rcpId" class="font-mono font-bold text-gray-800">-</span></div>
+        <div class="flex justify-between"><span>Tanggal:</span><span id="rcpDate">-</span></div>
+      </div>
+
+      <div id="rcpItemsList" class="py-3 border-b border-dashed border-gray-300 space-y-2 text-xs">
+        <p class="text-center text-gray-400 py-3">Belum ada item dipilih di Kasir</p>
+      </div>
+
+      <div class="flex justify-between items-center py-3 font-bold text-sm">
+        <span>TOTAL PEMBAYARAN</span>
+        <span id="rcpTotal" class="text-base text-brass font-black">Rp 0</span>
+      </div>
+
+      <div class="no-print pt-3 space-y-2">
+        <div id="btStatus" class="text-[11px] text-center font-semibold text-[#5A6558] py-2 bg-[#F2F3EE] rounded-xl">
+          Status: Siap hubungkan ke Odi Z58-IV
+        </div>
+        <!-- Pemilih lebar kertas -->
+<div class="mb-2 flex items-center justify-between bg-[#F2F3EE] rounded-xl px-3 py-2">
+  <span class="text-[10px] font-bold text-[#5A6558] uppercase">Lebar Kertas</span>
+  <div class="flex items-center space-x-1">
+    <button onclick="setPrinterWidth(32)" id="btnWidth32" type="button"
+      class="px-3 py-1 rounded-lg text-[10px] font-bold bg-brass text-white">58mm</button>
+    <button onclick="setPrinterWidth(42)" id="btnWidth42" type="button"
+      class="px-3 py-1 rounded-lg text-[10px] font-bold bg-white text-[#5A6558] border border-gray-200">80mm</button>
+  </div>
+</div>
+
+        <button id="btnBtPrint" onclick="printBluetooth()" type="button" class="w-full bg-brass text-white py-3.5 rounded-2xl font-bold text-xs shadow flex items-center justify-center space-x-2 cursor-pointer">
+          <span>📡 Sambung &amp; Cetak Struk Pelanggan</span>
+        </button>
+        <button onclick="printKitchenChecker()" type="button" class="w-full bg-[#52604E] hover:bg-[#434F3F] text-white py-3 rounded-2xl font-bold text-xs shadow flex items-center justify-center space-x-2 cursor-pointer">
+          <span>🍳 Cetak Checker Dapur / Barista</span>
+        </button>
+        <button onclick="window.print()" type="button" class="w-full bg-[#EFECE6] text-[#2C352B] py-2.5 rounded-xl font-bold text-xs cursor-pointer">
+          🖨️ Cetak Standar
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ================= DUAL BOTTOM BAR KASIR ================= -->
+  <footer class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#849382] text-white px-3 py-2.5 flex items-center justify-between z-30 shadow-lg border-t border-white/10">
+    <div class="flex items-center space-x-1.5">
+      <button onclick="printKitchenChecker()" type="button" class="bg-[#4E5B4B] hover:bg-[#3D473A] text-white px-3 py-2 rounded-xl font-bold text-[11px] flex items-center space-x-1 shadow-md active:scale-95 transition cursor-pointer">
+        <span>🍳 Dapur</span>
+      </button>
+      <button onclick="openInvoiceModal()" type="button" class="bg-[#D4AF37] hover:bg-[#B89324] text-white px-3 py-2 rounded-xl font-bold text-[11px] flex items-center space-x-1 shadow-md active:scale-95 transition cursor-pointer">
+        <span>📄 Invoice</span>
+      </button>
+    </div>
+
+    <div onclick="checkoutAndSaveTransaction()" class="flex items-center justify-end space-x-2 cursor-pointer pl-1 text-right">
+      <div>
+        <span id="bottomQtyBadge" class="text-[9px] font-bold bg-brass px-2 py-0.5 rounded-full inline-block">0 item</span>
+        <div id="displayTotal" class="text-xs font-extrabold text-[#FAF6EE] leading-tight">Rp 0</div>
+      </div>
+      <div class="bg-white/15 w-8 h-8 rounded-xl flex items-center justify-center text-xs" title="Selesaikan Transaksi">✅</div>
+    </div>
+  </footer>
+
+  <!-- ================= MODAL INVOICE SAGE GREEN (CUSTOM RESIZE) ================= -->
+  <!-- ================= MODAL INVOICE MODERN (REFERENSI GAMBAR) ================= -->
+  <div id="invoiceModal" style="display: none;" class="fixed inset-0 bg-black/65 z-50 items-center justify-center p-3 overflow-y-auto">
+    <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[96vh] flex flex-col justify-between p-4 sm:p-5 shadow-2xl overflow-hidden">
+      
+      <!-- Toolbar Pengaturan Upload & Ukuran (Hanya di Layar, Hilang Saat Print) -->
+      <div class="border-b border-gray-100 pb-2.5 mb-2.5 no-print space-y-2">
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-bold text-[#4A5847] uppercase tracking-wider">Preview Invoice Delicielo</span>
+          <button onclick="closeInvoiceModal()" type="button" class="text-gray-400 hover:text-gray-600 font-bold text-base cursor-pointer px-2">✕</button>
+        </div>
+
+        <div class="bg-[#F4F6F2] p-2.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs">
+          <!-- Kontrol Logo Kanan Atas -->
+          <div class="flex items-center space-x-2">
+            <label class="text-[10px] font-bold bg-white border border-[#7D8F7B] text-[#4A5847] px-2.5 py-1 rounded-xl cursor-pointer shadow-xs hover:bg-gray-50">
+              🖼️ Upload Logo Header
+              <input type="file" accept="image/*" class="hidden" onchange="loadCustomImage(this, 'invLogoCustom')">
+            </label>
+            <div class="flex items-center space-x-1 text-[10px] text-gray-500 font-semibold">
+              <span>Ukuran:</span>
+              <input type="range" id="sliderLogo" min="50" max="220" value="110" oninput="resizeInvImage('invLogoCustom', this.value, 'invLogoSize')" class="w-16 accent-[#4A5847] cursor-pointer">
+            </div>
+          </div>
+
+          <!-- Kontrol Footer Kiri Bawah -->
+          <div class="flex items-center space-x-2">
+            <label class="text-[10px] font-bold bg-white border border-[#7D8F7B] text-[#4A5847] px-2.5 py-1 rounded-xl cursor-pointer shadow-xs hover:bg-gray-50">
+              🥪 Upload Gambar Footer
+              <input type="file" accept="image/*" class="hidden" onchange="loadCustomImage(this, 'invFooterCustom')">
+            </label>
+            <div class="flex items-center space-x-1 text-[10px] text-gray-500 font-semibold">
+              <span>Ukuran:</span>
+              <input type="range" id="sliderFooter" min="80" max="320" value="160" oninput="resizeInvImage('invFooterCustom', this.value, 'invFooterSize')" class="w-20 accent-[#4A5847] cursor-pointer">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Area Lembar Invoice Sesuai Format Referensi -->
+      <div class="overflow-y-auto pr-1">
+        <div class="invoice-sheet" id="invoicePrintArea">
+          
+          <!-- TOP ROW: INVOICE TITLE & HEADER IMAGE (KANAN ATAS) -->
+          <div class="flex justify-between items-start mb-6">
+            <div class="w-7/12">
+              <h1 class="inv-hero-title mb-4">INVOICE</h1>
+              <div class="space-y-1.5 text-xs font-bold text-[#3E4D3C]">
+                <div class="flex items-center">
+                  <span class="w-36 text-[10px] tracking-wider uppercase">INVOICE NUMBER:</span>
+                  <input type="text" id="invNumber" value="1234/56789" class="inv-input-line font-bold w-36">
+                </div>
+                <div class="flex items-center">
+                  <span class="w-36 text-[10px] tracking-wider uppercase">DATE:</span>
+                  <input type="text" id="invDate" value="02/11/2026" class="inv-input-line font-medium w-28">
+                </div>
+                <div class="flex items-center">
+                  <span class="w-36 text-[10px] tracking-wider uppercase">DUE DATE:</span>
+                  <input type="text" id="invDueDate" value="14/11/2026" class="inv-input-line font-medium w-28">
+                </div>
+              </div>
+            </div>
+
+            <!-- Gambar Header Kanan Atas (Uploadable + Slider) -->
+            <div class="w-5/12 text-right flex justify-end items-start">
+              <img id="invLogoCustom" src="logo.png" alt="Delicielo Header" style="width: 110px;" class="object-contain" onerror="this.onerror=null; this.src='https://placehold.co/140x110/FDFCF7/3E4D3C?text=DELICIELO';">
+            </div>
+          </div>
+
+          <!-- PARTIES ROW: BILL TO (KIRI) & PAYABLE TO (KANAN) -->
+          <div class="grid grid-cols-2 gap-6 mb-6 text-xs">
+            <!-- Box BILL TO berbingkai seperti referensi -->
+            <div class="border-[1.5px] border-[#3E4D3C] p-3 rounded-none bg-white/40 space-y-1">
+              <div class="font-extrabold text-[10px] uppercase tracking-wider text-[#3E4D3C] mb-1">BILL TO:</div>
+              <input type="text" id="invClientName" placeholder="Nama Klien" value="Kimberly Nguyen" class="inv-input-line w-full font-bold">
+              <input type="text" id="invClientRole" placeholder="Jabatan / Perusahaan" value="Small Business Owner" class="inv-input-line w-full text-[11px] text-gray-600">
+              <input type="text" id="invClientAddress" placeholder="Alamat Pengiriman" value="123 Anywhere St, Any City" class="inv-input-line w-full text-[11px] text-gray-600">
+              <input type="text" id="invClientEmail" placeholder="Email / Kontak" value="hello@reallygreatsite.com" class="inv-input-line w-full text-[11px] text-gray-600">
+            </div>
+
+            <!-- PAYABLE TO KANAN -->
+            <div class="pl-2 space-y-1">
+              <div class="font-extrabold text-[10px] uppercase tracking-wider text-[#3E4D3C] mb-1">PAYABLE TO:</div>
+              <div class="font-bold text-[#3E4D3C]">Delicielo</div>
+              <div class="text-[11px] text-gray-600 leading-tight">
+                Jatiasih, Bekasi<br>
+                +62 851-9938-2012<br>
+                bydelicielo@gmail.com
+              </div>
+            </div>
+          </div>
+
+          <!-- TABEL GRID TEGAS KOTAK (PERSIS REFERENSI) -->
+          <table class="inv-grid-table mb-6">
+            <thead>
+              <tr>
+                <th style="width: 38px;" class="text-center">NO.</th>
+                <th>ITEM DESCRIPTION</th>
+                <th style="width: 48px;" class="text-center">QTY</th>
+                <th style="width: 90px;" class="text-center">PRICE</th>
+                <th style="width: 105px;" class="text-center">TOTAL</th>
+              </tr>
+            </thead>
+            <tbody id="invItemsBody"></tbody>
+          </table>
+
+          <!-- BOTTOM SECTION: DOODLE GAMBAR KIRI & KALKULASI KANAN -->
+          <div class="flex justify-between items-end mb-6">
+            <!-- Footer Image Kiri Bawah (Uploadable + Slider) -->
+            <div class="w-5/12 pr-2">
+              <img id="invFooterCustom" src="footer.png" alt="Delicielo Footer" style="width: 160px;" class="object-contain" onerror="this.onerror=null; this.src='https://placehold.co/180x130/FDFCF7/3E4D3C?text=DELICIELO+DOODLE';">
+            </div>
+
+            <!-- Perhitungan Garis Lurus (Sesuai Referensi) -->
+            <div class="w-6/12 space-y-1 text-xs">
+              <div class="inv-calc-row">
+                <span class="font-bold text-gray-600">subtotal:</span>
+                <span id="invSubtotal" class="font-bold text-[#3E4D3C]">Rp 0</span>
+              </div>
+              <div class="inv-calc-row">
+                <span class="font-bold text-gray-600">diskon:</span>
+                <div class="flex items-center space-x-1">
+                  <span>- Rp</span>
+                  <input type="number" id="invDiscount" value="0" min="0" oninput="recalcInvoice()" class="inv-input-line w-20 text-right font-bold text-xs">
+                </div>
+              </div>
+              <div class="inv-calc-row">
+                <span class="font-bold text-gray-600">ongkir / biaya:</span>
+                <div class="flex items-center space-x-1">
+                  <span>Rp</span>
+                  <input type="number" id="invShipping" value="0" min="0" oninput="recalcInvoice()" class="inv-input-line w-20 text-right font-bold text-xs">
+                </div>
+              </div>
+              <div class="flex justify-between items-center pt-2 pb-1 border-b-2 border-[#3E4D3C] font-black text-xs text-[#3E4D3C]">
+                <span class="uppercase tracking-wider">TOTAL AMOUNT:</span>
+                <span id="invTotalAmount" class="text-sm font-black tracking-tight">Rp 0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SIGNATURE & BANK DETAILS (SESUAI REFERENSI) -->
+          <div class="pt-2 text-right">
+            <div class="inline-block text-center border-b border-[#3E4D3C] pb-1 px-8 mb-3">
+              <span class="text-xs font-semibold text-gray-700 italic">Desty Lisandy</span>
+            </div>
+
+            <div class="flex justify-end text-xs space-x-4 mb-6 text-gray-700 font-semibold">
+              <div class="text-right">
+                <span class="font-black text-[#3E4D3C]">BANK NAME:</span> BCA<br>
+                <span class="font-black text-[#3E4D3C]">ACCOUNT NUMBER:</span> 6871298596
+              </div>
+            </div>
+
+            <div class="text-center font-black text-sm tracking-widest text-[#3E4D3C] uppercase pt-2">
+              THANK YOU FOR YOUR PURCHASE!
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Tombol Print / Download PDF -->
+      <div class="flex justify-end space-x-2 pt-3 border-t border-gray-100 mt-2 no-print">
+        <button onclick="closeInvoiceModal()" type="button" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl font-bold text-xs text-gray-600 cursor-pointer">
+          Tutup
+        </button>
+        <button onclick="downloadInvoicePDF()" type="button" class="bg-[#3E4D3C] hover:bg-[#2F3B2E] text-white px-5 py-2 rounded-xl font-bold text-xs cursor-pointer shadow-md flex items-center space-x-1.5 transition active:scale-95">
+  <span>⬇️ Download PDF</span>
+</button>
+<button onclick="printInvoiceNow()" type="button" class="bg-[#849382] hover:bg-[#6E7E6A] text-white px-4 py-2 rounded-xl font-bold text-xs cursor-pointer shadow-md">
+  🖨️ Cetak
+</button>
+
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: JADWAL PENGIRIMAN ================= -->
+  <div id="deliveryScheduleModal" style="display: none;" class="fixed inset-0 bg-black/60 z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-3xl w-full max-w-xs p-5 shadow-2xl space-y-3">
+      <div class="flex justify-between items-center border-b pb-2">
+        <div>
+          <h3 class="font-bold text-sm text-[#2C352B]">Jadwal &amp; Tujuan Pesanan</h3>
+          <p class="text-[10px] text-gray-400">Untuk Tiket Checker Dapur / Barista</p>
+        </div>
+        <button onclick="closeDeliveryModal()" class="text-gray-400 hover:text-gray-600 font-bold cursor-pointer">✕</button>
+      </div>
+
+      <div class="space-y-2.5 text-xs">
+        <div>
+          <label class="block font-bold text-[#5A6558] mb-1">Nama Pemesan</label>
+          <input type="text" id="delivCustomer" placeholder="Contoh: Kak Ryan / Bpk. Kevin" class="w-full p-2 border rounded-xl outline-none font-semibold text-[#2C352B]">
+        </div>
+        <div>
+          <label class="block font-bold text-[#5A6558] mb-1">No. Meja / Alamat Pengiriman</label>
+          <input type="text" id="delivLocation" placeholder="Contoh: Meja 04 / Gedung A Lt. 3" class="w-full p-2 border rounded-xl outline-none font-semibold text-[#2C352B]">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-[#5A6558] mb-1">Tgl Kirim</label>
+            <input type="date" id="delivDate" class="w-full p-2 border rounded-xl outline-none font-semibold">
+          </div>
+          <div>
+            <label class="block font-bold text-[#5A6558] mb-1">Jam Kirim</label>
+            <input type="time" id="delivTime" class="w-full p-2 border rounded-xl outline-none font-semibold">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-[#5A6558] mb-1">Catatan Tambahan (Opsional)</label>
+          <input type="text" id="delivNotes" placeholder="Contoh: Pisah es batu, Saos pedas" class="w-full p-2 border rounded-xl outline-none">
+        </div>
+      </div>
+
+      <div class="flex space-x-2 pt-2 border-t">
+        <button onclick="closeDeliveryModal()" class="w-1/2 bg-gray-100 py-2.5 rounded-xl font-bold text-xs text-gray-600 cursor-pointer">Batal</button>
+        <button onclick="confirmAndPrintChecker()" class="w-1/2 bg-[#52604E] hover:bg-[#414E3F] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-md">🖨️ Cetak Tiket</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: TAMBAH MENU BARU ================= -->
+  <div id="productModal" style="display: none;" class="fixed inset-0 bg-black/60 z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-3xl w-full max-w-sm max-h-[90vh] flex flex-col justify-between p-5 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 id="productModalTitle" class="font-bold text-sm">Tambah Menu Baru</h3>
+        <button onclick="closeProductModal()" class="text-gray-400 hover:text-gray-600 font-bold cursor-pointer">✕</button>
+      </div>
+
+      <div class="overflow-y-auto space-y-3 py-3 pr-1 text-xs">
+        <div>
+          <label class="block font-bold text-[#5A6558] mb-1">Nama Menu</label>
+          <input type="text" id="mProdName" placeholder="Contoh: Roasted Milk Tea" class="w-full p-2 border rounded-xl outline-none font-semibold">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-[#5A6558] mb-1">Kategori</label>
+            <select id="mProdCategory" class="w-full p-2 border rounded-xl outline-none">
+              <option value="Minuman">Minuman</option>
+              <option value="Makanan">Makanan</option>
+              <option value="Makanan">Custom</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-[#5A6558] mb-1">Ikon Emoji</label>
+            <input type="text" id="mProdIcon" placeholder="🍵" class="w-full p-2 border rounded-xl outline-none text-center">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-[#5A6558] mb-1">Tipe Varian Menu</label>
+          <select id="mProdType" class="w-full p-2 border rounded-xl outline-none">
+            <option value="size">Ukuran Botol (150ml, 250ml, 500ml, 1L)</option>
+            <option value="meat">Isian Daging (Ayam, Smoked Beef, Patty)</option>
+            <option value="single">Porsi Standar / Tunggal</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-[#5A6558] mb-1">Harga Dasar (Rp)</label>
+          <input type="number" id="mProdPrice" placeholder="15000" class="w-full p-2 border rounded-xl outline-none font-bold text-brass">
+        </div>
+
+        <div class="border-t pt-2">
+          <label class="block font-bold text-[#5A6558] mb-1">Komposisi Bahan Baku (Nama: Jumlah Satuan per baris)</label>
+          <textarea id="mProdRecipe" rows="4" placeholder="Susu UHT: 150 ml
+Bubuk Green Tea: 5.5 gr" class="w-full p-2 border rounded-xl outline-none text-xs leading-relaxed font-mono"></textarea>
+        </div>
+      </div>
+
+      <div class="flex space-x-2 pt-2 border-t">
+        <button onclick="closeProductModal()" class="w-1/2 bg-gray-100 py-2.5 rounded-xl font-bold text-xs text-gray-600 cursor-pointer">Batal</button>
+        <button onclick="saveProductModal()" class="w-1/2 bg-brass text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer">Simpan Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= POP-UP MODAL: UPDATE STOK, SATUAN & SUPPLIER ================= -->
+  <div id="stockModal" style="display: none;" class="fixed inset-0 bg-black/60 z-50 items-center justify-center p-3">
+    <div class="bg-white rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col justify-between p-5 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-2">
+        <div>
+          <h3 class="font-bold text-sm text-[#2C352B]">Edit Stok, Satuan &amp; Supplier</h3>
+          <p class="text-[10px] text-gray-400">Harga dasar HPP dihitung otomatis per satuan resep</p>
+        </div>
+        <button onclick="closeStockModal()" type="button" class="text-gray-400 hover:text-gray-600 font-bold cursor-pointer">✕</button>
+      </div>
+
+      <div id="stockModalInputs" class="overflow-y-auto space-y-3 py-3 pr-1 text-xs max-h-[65vh]"></div>
+
+      <div class="flex space-x-2 pt-3 border-t">
+        <button onclick="closeStockModal()" type="button" class="w-1/2 bg-gray-100 hover:bg-gray-200 py-2.5 rounded-xl font-bold text-xs text-gray-600 cursor-pointer">Tutup</button>
+        <button onclick="saveStockModal()" type="button" class="w-1/2 bg-[#849382] hover:bg-[#6E7E6A] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow">Simpan Perubahan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= POP-UP MODAL: EDIT RESEP MENU ================= -->
+  <div id="editRecipeModal" style="display: none;" class="fixed inset-0 bg-black/60 z-50 items-center justify-center p-3">
+    <div class="bg-white rounded-3xl w-full max-w-sm max-h-[85vh] flex flex-col justify-between p-5 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-2">
+        <div>
+          <h3 id="editRecipeModalTitle" class="font-bold text-sm text-[#2C352B]">Edit Resep Bahan</h3>
+          <p class="text-[10px] text-gray-400">Sesuaikan takaran bahan baku per porsi</p>
+        </div>
+        <button onclick="closeRecipeModal()" type="button" class="text-gray-400 hover:text-gray-600 font-bold cursor-pointer">✕</button>
+      </div>
+
+      <div id="editRecipeInputs" class="overflow-y-auto space-y-2 py-3 pr-1 text-xs max-h-[60vh]"></div>
+
+      <div class="flex space-x-2 pt-3 border-t">
+        <button onclick="closeRecipeModal()" type="button" class="w-1/2 bg-gray-100 hover:bg-gray-200 py-2.5 rounded-xl font-bold text-xs text-gray-600 cursor-pointer">Tutup</button>
+        <button onclick="saveRecipeModal()" type="button" class="w-1/2 bg-[#8F6B2D] hover:bg-[#785923] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow">Simpan Resep</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.PRINTER_WIDTH = parseInt(localStorage.getItem('delicielo_printer_width') || '32', 10);
+
+    const ADMIN_PIN = '200822';
+    let currentRole = 'GUEST';
+
+    const SIZES = {
+      '150ml': { factor: 150 / 250, ml: 150, bottle: 'Botol Plastik 150ml' },
+      '250ml': { factor: 1.0, ml: 250, bottle: 'Botol Plastik 250ml' },
+      '500ml': { factor: 500 / 250, ml: 500, bottle: 'Botol Plastik 500ml' },
+      '1L': { factor: 1000 / 250, ml: 1000, bottle: 'Botol Plastik 1 Liter' }
+    };
+
+    const MEATS = ['Ayam', 'Smoked Beef', 'Patty'];
+
+    const SUB_CATEGORIES = [
+      { id: 'all', label: 'All' },
+      { id: 'tea', label: 'Tea' },
+      { id: 'coffee', label: 'Coffee' },
+      { id: 'noncoffee', label: 'Non-Coffee' },
+      { id: 'makanan', label: 'Snacks' },
+      { id: 'custom', label: 'Custom' }
+    ];
+
+    let activeSubCat = 'all';
+    let showActiveOnly = false;
+    let selectedFilter = 'all';
+    let lastReceiptData = null;
+    let printCharacteristic = null;
+    let activePlanCategory = 'all';
+    let editingProductKey = null;
+    let productionTargets = {};
+
+    let inventoryStock = {
+      'Susu Kental Manis (SKM)': { stock: 2000, unit: 'ml', packagePrice: 16000, packageQty: 535, packageUnit: 'ml', costPerBase: 16000/535, supplier: 'Agen Sembako', phone: '6281311666223', link: '' },
+      'Bubuk Creamer': { stock: 1000, unit: 'gr', packagePrice: 45000, packageQty: 1000, packageUnit: 'gr', costPerBase: 45, supplier: 'Sentra Bubuk Minuman', phone: '6281234567890', link: 'https://shopee.co.id' },
+      'Susu UHT': { stock: 10000, unit: 'ml', packagePrice: 19000, packageQty: 1000, packageUnit: 'ml', costPerBase: 19, supplier: 'Grosir Susu Rawalumbu', phone: '6281298765432', link: '' },
+      'Seduhan Thai Tea': { stock: 3000, unit: 'ml', packagePrice: 15, packageQty: 1, packageUnit: 'ml', costPerBase: 15, supplier: 'Dapur Delicielo', phone: '', link: '' },
+      'Seduhan Green Tea': { stock: 3000, unit: 'ml', packagePrice: 20, packageQty: 1, packageUnit: 'ml', costPerBase: 20, supplier: 'Dapur Delicielo', phone: '', link: '' },
+      'Bubuk Green Tea': { stock: 1000, unit: 'gr', packagePrice: 180000, packageQty: 1000, packageUnit: 'gr', costPerBase: 180, supplier: 'Teh Hijau Nusantara', phone: '6281399887766', link: 'https://tokopedia.com' },
+      'Teh TongTji': { stock: 500, unit: 'gr', packagePrice: 30000, packageQty: 500, packageUnit: 'gr', costPerBase: 60, supplier: 'Toko Teh Resmi', phone: '', link: '' },
+      'Air Seduhan Teh': { stock: 5000, unit: 'ml', packagePrice: 2, packageQty: 1, packageUnit: 'ml', costPerBase: 2, supplier: 'Air Galon', phone: '', link: '' },
+      'Gula Cair': { stock: 2000, unit: 'ml', packagePrice: 18000, packageQty: 1000, packageUnit: 'ml', costPerBase: 18, supplier: 'Toko Bahan Kue', phone: '', link: '' },
+      'Espresso Shot': { stock: 2000, unit: 'ml', packagePrice: 40, packageQty: 1, packageUnit: 'ml', costPerBase: 40, supplier: 'Roastery Bekasi', phone: '', link: '' },
+      'Air Mineral': { stock: 10000, unit: 'ml', packagePrice: 1.5, packageQty: 1, packageUnit: 'ml', costPerBase: 1.5, supplier: 'Depot Air', phone: '', link: '' },
+      'Sirup Gula Aren': { stock: 1500, unit: 'ml', packagePrice: 35000, packageQty: 1000, packageUnit: 'ml', costPerBase: 35, supplier: 'Pabrik Aren', phone: '', link: '' },
+      'Butterscotch Syrup': { stock: 1000, unit: 'ml', packagePrice: 90000, packageQty: 1000, packageUnit: 'ml', costPerBase: 90, supplier: 'Supplier Sirup Gourmet', phone: '', link: '' },
+      'Caramel Syrup': { stock: 1000, unit: 'ml', packagePrice: 85000, packageQty: 1000, packageUnit: 'ml', costPerBase: 85, supplier: 'Supplier Sirup Gourmet', phone: '', link: '' },
+      'Topping Cendol Jelly': { stock: 1000, unit: 'gr', packagePrice: 25000, packageQty: 1000, packageUnit: 'gr', costPerBase: 25, supplier: 'Agen Topping Minuman', phone: '', link: '' },
+      'Coklat Bubuk': { stock: 1000, unit: 'gr', packagePrice: 80000, packageQty: 1000, packageUnit: 'gr', costPerBase: 80, supplier: 'Toko Bahan Kue', phone: '', link: '' },
+      'Roti Tawar': { stock: 100, unit: 'lembar', packagePrice: 14400, packageQty: 12, packageUnit: 'lembar', costPerBase: 1200, supplier: 'Pabrik Roti Lembut', phone: '6281311223344', link: 'https://shopee.co.id' },
+      'Telur Ayam': { stock: 100, unit: 'butir', packagePrice: 32000, packageQty: 16, packageUnit: 'butir', costPerBase: 2000, supplier: 'Toko Telur Berkah Jatiasih', phone: '6281298765432', link: '' },
+      'Romaine Lettuce': { stock: 2000, unit: 'gr', packagePrice: 35000, packageQty: 1000, packageUnit: 'gr', costPerBase: 35, supplier: 'Hidroponik Lembang', phone: '6281223344556', link: 'https://tokopedia.com' },
+      'Timun Fresh (Slice)': { stock: 2000, unit: 'gr', packagePrice: 15000, packageQty: 1000, packageUnit: 'gr', costPerBase: 15, supplier: 'Pasar Kranji Segar', phone: '6285712345678', link: '' },
+      'Tomat Fresh (Slice)': { stock: 200, unit: 'slice', packagePrice: 350, packageQty: 1, packageUnit: 'slice', costPerBase: 350, supplier: 'Pasar Kranji Segar', phone: '6285712345678', link: '' },
+      'Mayonnaise Dressing': { stock: 2000, unit: 'ml', packagePrice: 28000, packageQty: 1000, packageUnit: 'ml', costPerBase: 28, supplier: 'Grosir Mayo Kuliner', phone: '', link: '' },
+      'Daging Ayam Suwir/Fillet': { stock: 3000, unit: 'gr', packagePrice: 48000, packageQty: 1000, packageUnit: 'gr', costPerBase: 48, supplier: 'PD. Ayam Segar Bekasi', phone: '6281234567890', link: 'https://tokopedia.com' },
+      'Smoked Beef Slice': { stock: 100, unit: 'lembar', packagePrice: 50000, packageQty: 20, packageUnit: 'lembar', costPerBase: 2500, supplier: 'Frozen Food Prima', phone: '', link: '' },
+      'Beef/Chicken Patty': { stock: 50, unit: 'lembar', packagePrice: 35000, packageQty: 10, packageUnit: 'lembar', costPerBase: 3500, supplier: 'Frozen Food Prima', phone: '', link: '' },
+      'Kulit Tortilla': { stock: 100, unit: 'pcs', packagePrice: 40000, packageQty: 20, packageUnit: 'pcs', costPerBase: 2000, supplier: 'Agen Tortilla', phone: '', link: '' },
+      'Thousand Island Dressing': { stock: 1000, unit: 'ml', packagePrice: 35000, packageQty: 1000, packageUnit: 'ml', costPerBase: 35, supplier: 'Grosir Mayo Kuliner', phone: '', link: '' },
+      'Macaroni Kering': { stock: 1000, unit: 'gr', packagePrice: 25000, packageQty: 1000, packageUnit: 'gr', costPerBase: 25, supplier: 'Toko Sembako', phone: '', link: '' },
+      'Spready Cheese': { stock: 500, unit: 'gr', packagePrice: 35000, packageQty: 500, packageUnit: 'gr', costPerBase: 70, supplier: 'Toko Bahan Kue', phone: '', link: '' },
+      'Kertas Pembungkus': { stock: 200, unit: 'lembar', packagePrice: 40000, packageQty: 100, packageUnit: 'lembar', costPerBase: 400, supplier: 'Percetakan Kemasan', phone: '', link: '' },
+      'Saos Saset': { stock: 200, unit: 'bh', packagePrice: 300, packageQty: 1, packageUnit: 'bh', costPerBase: 300, supplier: 'Agen Saos Sachet', phone: '', link: '' },
+      'Packaging Sandwich / Box': { stock: 200, unit: 'bh', packagePrice: 1500, packageQty: 1, packageUnit: 'bh', costPerBase: 1500, supplier: 'Percetakan Kemasan Bekasi', phone: '6281299887711', link: '' },
+      'Sticker Sandwich': { stock: 200, unit: 'bh', packagePrice: 300, packageQty: 1, packageUnit: 'bh', costPerBase: 300, supplier: 'Percetakan Stiker', phone: '', link: '' },
+      'Packaging Nesto (600ml)': { stock: 200, unit: 'bh', packagePrice: 1650, packageQty: 1, packageUnit: 'bh', costPerBase: 1650, supplier: 'Percetakan Kemasan Bekasi', phone: '', link: '' },
+      'Sendok & Garpu Set': { stock: 200, unit: 'set', packagePrice: 500, packageQty: 1, packageUnit: 'set', costPerBase: 500, supplier: 'Agen Plastik', phone: '', link: '' },
+      'Tempat Sambel 25ml': { stock: 200, unit: 'bh', packagePrice: 15000, packageQty: 50, packageUnit: 'bh', costPerBase: 300, supplier: 'Toko Kemasan Plastik', phone: '', link: '' },
+      'Sticker Delicielo': { stock: 500, unit: 'bh', packagePrice: 250, packageQty: 1, packageUnit: 'bh', costPerBase: 250, supplier: 'Percetakan Stiker', phone: '', link: '' },
+      'Botol Plastik 250ml': { stock: 300, unit: 'pcs', packagePrice: 1100, packageQty: 1, packageUnit: 'pcs', costPerBase: 1100, supplier: 'Pabrik Botol Chubby', phone: '6281778899001', link: 'https://tokopedia.com' }
+    };
+
+    let products = {
+      thai: {
+        name: 'Thai Tea', subCat: 'tea', category: 'Minuman', type: 'size', icon: '🧋', curVar: '250ml',
+        prices: { '150ml': 10000, '250ml': 15000, '500ml': 30000, '1L': 58000 },
+        orders: { '150ml': 0, '250ml': 0, '500ml': 0, '1L': 0 },
+        recipe: {
+          'Susu Kental Manis (SKM)': { qty: 30, unit: 'ml' },
+          'Bubuk Creamer': { qty: 10, unit: 'gr' },
+          'Larutan Air Creamer': { qty: 50, unit: 'ml', isNote: true },
+          'Susu UHT': { qty: 50, unit: 'ml' },
+          'Seduhan Thai Tea': { qty: 130, unit: 'ml' }
+        }
+      },
+      green: {
+        name: 'Green Tea', subCat: 'tea', category: 'Minuman', type: 'size', icon: '🍵', curVar: '250ml',
+        prices: { '150ml': 10000, '250ml': 16000, '500ml': 32000, '1L': 62000 },
+        orders: { '150ml': 0, '250ml': 0, '500ml': 0, '1L': 0 },
+        recipe: {
+          'Susu Kental Manis (SKM)': { qty: 30, unit: 'ml' },
+          'Bubuk Creamer': { qty: 10, unit: 'gr' },
+          'Larutan Air Creamer': { qty: 50, unit: 'ml', isNote: true },
+          'Susu UHT': { qty: 50, unit: 'ml' },
+          'Bubuk Green Tea': { qty: 5.57, unit: 'gr' }
+        }
+      },
+      roastedtea: {
+        name: 'Roasted Milk Tea', subCat: 'tea', category: 'Minuman', type: 'size', icon: '🍂', curVar: '250ml',
+        prices: { '150ml': 10000, '250ml': 15000, '500ml': 30000, '1L': 58000 },
+        orders: { '150ml': 0, '250ml': 0, '500ml': 0, '1L': 0 },
+        recipe: {
+          'Teh TongTji': { qty: 2.5, unit: 'gr' },
+          'Air Seduhan Teh': { qty: 187.5, unit: 'ml' },
+          'Susu UHT': { qty: 83.33, unit: 'ml' },
+          'Gula Cair': { qty: 8.33, unit: 'ml' }
+        }
+      },
+      americano: {
+        name: 'Americano', subCat: 'coffee', category: 'Minuman', type: 'size', icon: '☕', curVar: '250ml',
+        prices: { '150ml': 9000, '250ml': 10000, '500ml': 24000, '1L': 40000 },
+        orders: { '150ml': 0, '250ml': 0, '500ml': 0, '1L': 0 },
+        recipe: {
+          'Espresso Shot': { qty: 40, unit: 'ml' },
+          'Air Mineral': { qty: 210, unit: 'ml' }
+        }
+      },
+      kopisusu: {
+        name: 'Kopi Susu Aren', subCat: 'coffee', category: 'Minuman', type: 'size', icon: '🧋', curVar: '250ml',
+        prices: { '150ml': 12000, '250ml': 18000, '500ml': 36000, '1L': 70000 },
+        orders: { '150ml': 0, '250ml': 0, '500ml': 0, '1L': 0 },
+        recipe: {
+          'Espresso Shot': { qty: 30, unit: 'ml' },
+          'Bubuk Creamer': { qty: 10, unit: 'gr' },
+          'Larutan Air Creamer': { qty: 50, unit: 'ml', isNote: true },
+          'Susu UHT': { qty: 160, unit: 'ml' },
+          'Sirup Gula Aren': { qty: 10, unit: 'ml' }
+        }
+      },
+      butterscotch: {
+        name: 'Butterscotch', subCat: 'coffee', category: 'Minuman', type: 'size', icon: '🥃', curVar: '250ml',
+        prices: { '150ml': 12000, '250ml': 18000, '500ml': 36000, '1L': 70000 },
+        orders: { '150ml': 0, '250ml': 0, '500ml': 0, '1L': 0 },
+        recipe: {
+          'Espresso Shot': { qty: 30, unit: 'ml' },
+          'Bubuk Creamer': { qty: 10, unit: 'gr' },
+          'Larutan Air Creamer': { qty: 50, unit: 'ml', isNote: true },
+          'Susu UHT': { qty: 160, unit: 'ml' },
+          'Butterscotch Syrup': { qty: 10, unit: 'ml' }
+        }
+      },
+      caramel: {
+        name: 'Caramel Latte', subCat: 'coffee', category: 'Minuman', type: 'size', icon: '🍯', curVar: '250ml',
+        prices: { '150ml': 12000, '250ml': 18000, '500ml': 36000, '1L': 70000 },
+        orders: { '150ml': 0, '250ml': 0, '500ml': 0, '1L': 0 },
+        recipe: {
+          'Espresso Shot': { qty: 30, unit: 'ml' },
+          'Bubuk Creamer': { qty: 10, unit: 'gr' },
+          'Larutan Air Creamer': { qty: 50, unit: 'ml', isNote: true },
+          'Susu UHT': { qty: 160, unit: 'ml' },
+          'Caramel Syrup': { qty: 10, unit: 'ml' }
+        }
+      },
+      cendol: {
+        name: 'Cendol Jelly', subCat: 'noncoffee', category: 'Minuman', type: 'size', icon: '🍧', curVar: '250ml',
+        prices: { '150ml': 10000, '250ml': 15000, '500ml': 30000, '1L': 58000 },
+        orders: { '150ml': 0, '250ml': 0, '500ml': 0, '1L': 0 },
+        recipe: {
+          'Sirup Gula Aren': { qty: 10, unit: 'ml' },
+          'Susu UHT': { qty: 240, unit: 'ml' },
+          'Topping Cendol Jelly': { qty: 20, unit: 'gr' }
+        }
+      },
+      chocolate: {
+        name: 'Chocolate', subCat: 'noncoffee', category: 'Minuman', type: 'size', icon: '🍫', curVar: '250ml',
+        prices: { '150ml': 10000, '250ml': 15000, '500ml': 30000, '1L': 58000 },
+        orders: { '150ml': 0, '250ml': 0, '500ml': 0, '1L': 0 },
+        recipe: {
+          'Coklat Bubuk': { qty: 8, unit: 'gr' },
+          'Air Mineral': { qty: 100, unit: 'ml' },
+          'Susu UHT': { qty: 150, unit: 'ml' },
+          'Gula Cair': { qty: 10, unit: 'ml' }
+        }
+      },
+      sandwich_whole: {
+        name: 'Sandwich (Whole)', subCat: 'makanan', category: 'Makanan', type: 'meat', icon: '🥪', curVar: 'Ayam',
+        prices: { 'Ayam': 38000, 'Smoked Beef': 38000, 'Patty': 38000 },
+        orders: { 'Ayam': 0, 'Smoked Beef': 0, 'Patty': 0 },
+        recipe: {
+          'Roti Tawar': { qty: 2, unit: 'lembar' },
+          'Telur Ayam': { qty: 0.45, unit: 'butir' },
+          'Romaine Lettuce': { qty: 12, unit: 'gr' },
+          'Tomat Fresh (Slice)': { qty: 1, unit: 'slice' },
+          'Mayonnaise Dressing': { qty: 11, unit: 'ml' }
+        }
+      },
+      sandwich_half: {
+        name: 'Sandwich (Half)', subCat: 'makanan', category: 'Makanan', type: 'meat', icon: '🥙', curVar: 'Ayam',
+        prices: { 'Ayam': 19000, 'Smoked Beef': 19000, 'Patty': 19000 },
+        orders: { 'Ayam': 0, 'Smoked Beef': 0, 'Patty': 0 },
+        recipe: {
+          'Roti Tawar': { qty: 1.5, unit: 'lembar' },
+          'Telur Ayam': { qty: 0.225, unit: 'butir' },
+          'Romaine Lettuce': { qty: 6, unit: 'gr' },
+          'Tomat Fresh (Slice)': { qty: 0.5, unit: 'slice' },
+          'Mayonnaise Dressing': { qty: 5.5, unit: 'ml' }
+        }
+      },
+      salad_wrap: {
+        name: 'Salad Wrap', subCat: 'makanan', category: 'Makanan', type: 'single', icon: '🌯', curVar: 'Reguler',
+        prices: { 'Reguler': 28000 },
+        orders: { 'Reguler': 0 },
+        recipe: {
+          'Kulit Tortilla': { qty: 1, unit: 'pcs' },
+          'Thousand Island Dressing': { qty: 11, unit: 'ml' },
+          'Telur Ayam': { qty: 0.45, unit: 'butir' },
+          'Daging Ayam Suwir/Fillet': { qty: 38, unit: 'gr' },
+          'Romaine Lettuce': { qty: 12, unit: 'gr' },
+          'Tomat Fresh (Slice)': { qty: 1, unit: 'slice' }
+        }
+      },
+      macaroni: {
+        name: 'Macaroni Schotel', subCat: 'makanan', category: 'Makanan', type: 'single', icon: '🍲', curVar: 'Reguler',
+        prices: { 'Reguler': 20000 },
+        orders: { 'Reguler': 0 },
+        recipe: {
+          'Macaroni Kering': { qty: 50, unit: 'gr' },
+          'Susu UHT': { qty: 50, unit: 'ml' },
+          'Spready Cheese': { qty: 8, unit: 'gr' },
+          'Smoked Beef Slice': { qty: 0.35, unit: 'lembar' }
+        }
+      },
+      nasi_taichan: {
+        name: 'Nasi Taichan', subCat: 'makanan', category: 'Makanan', type: 'single', icon: '🍗', curVar: 'Reguler',
+        prices: { 'Reguler': 25000 },
+        orders: { 'Reguler': 0 },
+        recipe: {
+          'Daging Ayam Suwir/Fillet': { qty: 40, unit: 'gr' },
+          'Telur Ayam': { qty: 0.45, unit: 'butir' },
+          'Romaine Lettuce': { qty: 15, unit: 'gr' },
+          'Timun Fresh (Slice)': { qty: 25, unit: 'gr' }
+        }
+      }
+    };
+
+    let transactions = [];
+
+    // Fungsi Upload Gambar Custom ke LocalStorage
+    function loadCustomImage(input, targetId) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const target = document.getElementById(targetId);
+          if (target) {
+            target.src = e.target.result;
+            target.style.display = 'block';
+            try {
+              localStorage.setItem(targetId, e.target.result);
+            } catch (err) {
+              console.warn('LocalStorage penuh:', err);
+            }
+          }
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function handleAuthClick() {
+      if (currentRole === 'ADMIN') {
+        if (confirm('Keluar dari Akses Admin (kembali ke Guest)?')) {
+          setRole('GUEST');
+        }
+      } else {
+        const pin = prompt('Masukkan PIN Admin:');
+        if (pin === ADMIN_PIN) {
+          setRole('ADMIN');
+          alert('Akses Admin berhasil dibuka!');
+        } else if (pin !== null) {
+          alert('PIN salah!');
+        }
+      }
+    }
+
+    function setRole(role) {
+      currentRole = role;
+      const badge = document.getElementById('roleBadgeText');
+      const btn = document.getElementById('btnDrawerAuth');
+      const adminEls = document.querySelectorAll('.admin-only');
+      const quickNav = document.getElementById('quickNavTabs');
+
+      if (role === 'ADMIN') {
+        badge.innerText = 'ADMIN (Tuan Muda)';
+        badge.className = 'text-xs font-black text-brass';
+        btn.innerText = 'Logout Admin';
+        adminEls.forEach(el => {
+          el.classList.remove('hidden');
+          el.style.display = 'flex';
+        });
+        quickNav.className = 'grid grid-cols-5 text-center bg-[#768574] text-[11px] font-semibold border-t border-white/10';
+        document.getElementById('t-products').style.display = 'block';
+        document.getElementById('t-inventory').style.display = 'block';
+        document.getElementById('t-finance').style.display = 'block';
+      } else {
+        badge.innerText = 'GUEST (Staf Dapur)';
+        badge.className = 'text-xs font-black text-[#5A6558]';
+        btn.innerText = 'Login Admin';
+        adminEls.forEach(el => {
+          el.classList.add('hidden');
+          el.style.display = 'none';
+        });
+        quickNav.className = 'grid grid-cols-2 text-center bg-[#768574] text-[11px] font-semibold border-t border-white/10';
+        document.getElementById('t-products').style.display = 'none';
+        document.getElementById('t-inventory').style.display = 'none';
+        document.getElementById('t-finance').style.display = 'none';
+        navigateTab('pos');
+      }
+    }
+
+    function getVariants(item) {
+      if (item.type === 'size') return Object.keys(SIZES);
+      if (item.type === 'meat') return MEATS;
+      return ['Reguler'];
+    }
+
+    function calcProductIngredients(key, qty, variant) {
+      const it = products[key];
+      const res = {};
+      const f = (it.type === 'size') ? SIZES[variant].factor * qty : qty;
+
+      for (const ing in it.recipe) {
+        const base = it.recipe[ing];
+        res[ing] = { qty: base.qty * f, unit: base.unit, isNote: base.isNote };
+      }
+
+      if (it.type === 'meat') {
+        const factorMeat = (key === 'sandwich_half') ? 0.5 : 1.0;
+        if (variant === 'Ayam') res['Daging Ayam Suwir/Fillet'] = { qty: 38 * factorMeat * qty, unit: 'gr' };
+        if (variant === 'Smoked Beef') res['Smoked Beef Slice'] = { qty: 1 * factorMeat * qty, unit: 'lembar' };
+        if (variant === 'Patty') res['Beef/Chicken Patty'] = { qty: 1 * factorMeat * qty, unit: 'lembar' };
+      }
+      return res;
+    }
+
+    function calcProductPackaging(key, qty, variant) {
+      const it = products[key];
+      const pkg = {};
+
+      if (it.category === 'Minuman' && it.type === 'size') {
+        const bottleName = SIZES[variant].bottle;
+        pkg[bottleName] = { qty: qty, unit: 'pcs' };
+        pkg[`Sticker ${it.name} (${variant})`] = { qty: qty, unit: 'pcs' };
+      } else if (key === 'sandwich_whole' || key === 'sandwich_half') {
+        pkg['Kertas Pembungkus'] = { qty: 1 * qty, unit: 'lembar' };
+        pkg['Saos Saset'] = { qty: 1 * qty, unit: 'bh' };
+        pkg['Packaging Sandwich / Box'] = { qty: 1 * qty, unit: 'bh' };
+        pkg['Sticker Sandwich'] = { qty: 1 * qty, unit: 'bh' };
+      } else if (key === 'salad_wrap') {
+        pkg['Kertas Pembungkus'] = { qty: 1 * qty, unit: 'lembar' };
+        pkg['Packaging Sandwich / Box'] = { qty: 1 * qty, unit: 'bh' };
+        pkg['Sticker Sandwich'] = { qty: 1 * qty, unit: 'bh' };
+      } else if (key === 'macaroni') {
+        pkg['Packaging Sandwich / Box'] = { qty: 1 * qty, unit: 'bh' };
+        pkg['Saos Saset'] = { qty: 1 * qty, unit: 'bh' };
+      } else if (key === 'nasi_taichan') {
+        pkg['Packaging Nesto (600ml)'] = { qty: 1 * qty, unit: 'bh' };
+        pkg['Sendok & Garpu Set'] = { qty: 1 * qty, unit: 'set' };
+        pkg['Tempat Sambel 25ml'] = { qty: 1 * qty, unit: 'bh' };
+        pkg['Saos Saset'] = { qty: 1 * qty, unit: 'bh' };
+        pkg['Sticker Delicielo'] = { qty: 1 * qty, unit: 'bh' };
+      }
+      return pkg;
+    }
+
+    window.toggleDrawer = function(open) {
+      const d = document.getElementById('sideDrawer');
+      const o = document.getElementById('sideDrawerOverlay');
+      if (open) {
+        o.classList.remove('hidden');
+        d.classList.remove('-translate-x-full');
+      } else {
+        d.classList.add('-translate-x-full');
+        o.classList.add('hidden');
+      }
+    };
+
+    window.navigateTab = function(t) {
+      toggleDrawer(false);
+      const sections = ['pos', 'plan', 'products', 'inventory', 'finance', 'struk'];
+      sections.forEach(s => {
+        const el = document.getElementById(`sec-${s}`);
+        if (el) {
+          if (s === t) {
+            el.classList.remove('hidden');
+          } else {
+            el.classList.add('hidden');
+          }
+        }
+      });
+
+      const tabs = ['pos', 'plan', 'products', 'inventory', 'finance'];
+      tabs.forEach(tabKey => {
+        const el = document.getElementById(`t-${tabKey}`);
+        if (el) {
+          el.className = (t === tabKey)
+            ? "py-2.5 text-white border-b-2 border-[#E5C888] cursor-pointer"
+            : "py-2.5 text-white/70 border-b-2 border-transparent cursor-pointer";
+        }
+      });
+
+      if (t === 'plan') {
+        syncPosToPlanInputs();
+        renderFilterButtons();
+        calculateIngredients();
+      }
+      if (t === 'products') renderProductsManageList();
+      if (t === 'inventory') renderInventoryList();
+      if (t === 'finance') renderFinanceDashboard();
+      if (t === 'struk') buildReceiptView();
+    };
+
+    function renderSubCatBar() {
+      const bar = document.getElementById('subCategoryBar');
+      if (!bar) return;
+      bar.innerHTML = SUB_CATEGORIES.map(sc => `
+        <button onclick="setSubCat('${sc.id}', '${sc.label}')" type="button" class="shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition ${activeSubCat === sc.id ? 'bg-[#7D8F7B] text-white font-bold' : 'bg-white/70 text-[#5A6558] hover:text-[#2C352B]'}">
+          ${sc.label}
+        </button>
+      `).join('');
+    }
+
+    window.setSubCat = function(id, label) {
+      activeSubCat = id;
+      document.getElementById('activeSubCatLabel').innerText = label;
+      renderSubCatBar();
+      renderPosGrid();
+    };
+
+    window.toggleActiveOrdersOnly = function() {
+      showActiveOnly = !showActiveOnly;
+      const btn = document.getElementById('toggleActiveBtn');
+      const c = document.getElementById('toggleCircle');
+      if (showActiveOnly) {
+        btn.className = "w-11 h-6 rounded-full bg-brass p-0.5 flex items-center cursor-pointer shadow-inner";
+        c.className = "w-5 h-5 rounded-full bg-white shadow-md transform translate-x-5 transition-transform duration-200";
+      } else {
+        btn.className = "w-11 h-6 rounded-full bg-[#D5D8CE] p-0.5 flex items-center cursor-pointer shadow-inner";
+        c.className = "w-5 h-5 rounded-full bg-white shadow-md transform translate-x-0 transition-transform duration-200";
+      }
+      renderPosGrid();
+    };
+
+    function renderPosGrid() {
+      const container = document.getElementById('posGridContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      for (const k in products) {
+        const item = products[k];
+        if (activeSubCat !== 'all' && item.subCat !== activeSubCat) continue;
+
+        const totalQ = Object.values(item.orders).reduce((a, b) => a + b, 0);
+        if (showActiveOnly && totalQ === 0) continue;
+
+        const vars = getVariants(item);
+        const curVar = item.curVar;
+        const curPrice = item.prices[curVar] || 0;
+        const curQ = item.orders[curVar] || 0;
+
+        let pillsHtml = '';
+        if (item.type !== 'single') {
+          vars.forEach(v => {
+            const isSel = (v === curVar);
+            const hasQ = (item.orders[v] > 0);
+            const cls = isSel ? 'var-active' : (hasQ ? 'var-has-qty' : 'var-inactive');
+            pillsHtml += `<button onclick="setVar('${k}', '${v}')" type="button" class="px-2 py-0.5 rounded-lg text-[10px] cursor-pointer transition ${cls}">${v}${hasQ && !isSel ? ` (${item.orders[v]})` : ''}</button>`;
+          });
+        } else {
+          pillsHtml = `<span class="px-2.5 py-0.5 rounded-lg text-[10px] var-inactive font-medium">Porsi Standar</span>`;
+        }
+
+        container.innerHTML += `
+          <div class="${totalQ > 0 ? 'card-active' : 'card-borderless'} p-3.5 rounded-3xl flex flex-col justify-between transition">
+            <div>
+              <div class="relative flex items-center justify-center h-16 bg-[#F6F5F0] rounded-2xl mb-2 text-3xl">
+                <span>${item.icon}</span>
+                ${totalQ > 0 ? `<span class="absolute top-1.5 right-2 text-[10px] font-extrabold text-white px-2 py-0.5 rounded-full bg-brass">${totalQ}x</span>` : ''}
+              </div>
+              <h3 class="font-bold text-xs text-center text-[#2C352B] min-h-[28px] flex items-center justify-center">${item.name}</h3>
+              <div class="flex flex-wrap justify-center gap-1 my-2 min-h-[42px] items-center">${pillsHtml}</div>
+              <p class="text-center text-xs font-extrabold text-brass">Rp ${curPrice.toLocaleString('id-ID')}</p>
+            </div>
+            
+            <div class="flex items-center justify-between bg-[#F4F3EE] p-1 rounded-2xl mt-2.5">
+              <button onclick="changeQty('${k}', -1)" type="button" class="w-7 h-7 rounded-xl bg-white text-[#5A6558] flex items-center justify-center font-bold active:scale-95 shadow-xs cursor-pointer text-sm">-</button>
+              <input type="number" min="0" value="${curQ}" onchange="setDirectQty('${k}', this.value)" 
+                class="w-10 text-center font-extrabold text-xs bg-transparent border-none outline-none select-all text-[#2C352B]">
+              <button onclick="changeQty('${k}', 1)" type="button" class="w-7 h-7 rounded-xl bg-[#7D8F7B] text-white flex items-center justify-center font-bold active:scale-95 shadow-xs cursor-pointer text-sm">+</button>
+            </div>
+          </div>
+        `;
+      }
+      updatePosTotals();
+    }
+
+    window.setVar = function(k, v) { products[k].curVar = v; renderPosGrid(); };
+    window.changeQty = function(k, d) {
+      const it = products[k];
+      it.orders[it.curVar] = Math.max(0, (it.orders[it.curVar] || 0) + d);
+      renderPosGrid();
+    };
+    window.setDirectQty = function(k, val) {
+      const it = products[k];
+      it.orders[it.curVar] = Math.max(0, parseInt(val) || 0);
+      renderPosGrid();
+    };
+
+    function updatePosTotals() {
+      let tQ = 0, tP = 0;
+      for (const k in products) {
+        for (const v in products[k].orders) {
+          const q = products[k].orders[v];
+          tQ += q;
+          tP += (q * (products[k].prices[v] || 0));
+        }
+      }
+      const bBadge = document.getElementById('bottomQtyBadge');
+      const dTotal = document.getElementById('displayTotal');
+      const rTotal = document.getElementById('rcpTotal');
+      if (bBadge) bBadge.innerText = `${tQ} item`;
+      if (dTotal) dTotal.innerText = 'Rp ' + tP.toLocaleString('id-ID');
+      if (rTotal) rTotal.innerText = 'Rp ' + tP.toLocaleString('id-ID');
+    }
+
+    window.resetPos = function() {
+      if (confirm('Kosongkan semua pesanan di Kasir?')) {
+        for (const k in products) {
+          for (const v in products[k].orders) products[k].orders[v] = 0;
+          products[k].curVar = products[k].type === 'size' ? '250ml' : (products[k].type === 'meat' ? 'Ayam' : 'Reguler');
+        }
+        if (showActiveOnly) toggleActiveOrdersOnly();
+        renderPosGrid();
+        buildReceiptView();
+      }
+    };
+
+    // ==========================================
+    // TAB 2: BAHAN BAKU (FILTER & SEARCH)
+    // ==========================================
+    window.setPlanCategory = function(cat) {
+      activePlanCategory = cat;
+      ['all', 'tea', 'coffee', 'noncoffee', 'makanan'].forEach(c => {
+        const btn = document.getElementById(`pcat_${c}`);
+        if (btn) {
+          if (c === cat) {
+            btn.className = "shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold bg-[#7D8F7B] text-white cursor-pointer transition";
+          } else {
+            btn.className = "shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold bg-white text-[#5A6558] cursor-pointer transition";
+          }
+        }
+      });
+      renderTargetInputs();
+    };
+
+    function renderTargetInputs() {
+      const container = document.getElementById('targetInputsContainer');
+      if (!container) return;
+      
+      const searchKeyword = (document.getElementById('prodSearchInput')?.value || '').toLowerCase();
+      container.innerHTML = '';
+
+      let hasMatch = false;
+
+      for (const k in products) {
+        const item = products[k];
+        
+        if (activePlanCategory !== 'all') {
+          if (activePlanCategory === 'makanan' && item.category !== 'Makanan') continue;
+          if (activePlanCategory !== 'makanan' && item.subCat !== activePlanCategory) continue;
+        }
+
+        if (searchKeyword && !item.name.toLowerCase().includes(searchKeyword)) {
+          continue;
+        }
+
+        hasMatch = true;
+        const vars = getVariants(item);
+        const gridCols = vars.length === 4 ? 'grid-cols-4' : (vars.length === 3 ? 'grid-cols-3' : 'grid-cols-1');
+
+        container.innerHTML += `
+          <div class="p-2.5 bg-[#F4F3EE] rounded-2xl" id="planItemRow_${k}">
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-bold text-xs text-[#2C352B]">${item.icon} ${item.name}</span>
+              <span class="text-[10px] font-semibold text-[#6E7E6A]">${item.category}</span>
+            </div>
+            <div class="grid ${gridCols} gap-1.5 text-center">
+              ${vars.map(v => {
+                const targetKey = `${k}_${v}`;
+                const val = productionTargets[targetKey] !== undefined ? productionTargets[targetKey] : (item.orders[v] || 0);
+                return `
+                  <div>
+                    <label class="block text-[10px] font-medium text-[#5A6558] mb-0.5">${v}</label>
+                    <input type="number" id="target_${targetKey}" value="${val}" min="0" oninput="onTargetChange('${k}', '${v}', this.value)" 
+                      class="w-full text-xs font-extrabold bg-white p-1 rounded-xl outline-none text-center text-brass shadow-xs">
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      if (!hasMatch) {
+        container.innerHTML = '<p class="text-center text-xs text-gray-400 py-4">Menu tidak ditemukan.</p>';
+      }
+    }
+
+    window.filterProductionInputs = function() {
+      renderTargetInputs();
+    };
+
+    function syncPosToPlanInputs() {
+      for (const k in products) {
+        getVariants(products[k]).forEach(v => {
+          productionTargets[`${k}_${v}`] = products[k].orders[v] || 0;
+        });
+      }
+      renderTargetInputs();
+    }
+
+    window.onTargetChange = function(k, v, val) {
+      productionTargets[`${k}_${v}`] = Math.max(0, parseInt(val) || 0);
+      renderFilterButtons();
+      calculateIngredients();
+    };
+
+    window.resetPlan = function() {
+      for (const k in products) {
+        getVariants(products[k]).forEach(v => {
+          productionTargets[`${k}_${v}`] = 0;
+          const inp = document.getElementById(`target_${k}_${v}`);
+          if (inp) inp.value = 0;
+        });
+      }
+      selectedFilter = 'all';
+      renderFilterButtons();
+      calculateIngredients();
+    };
+
+    function renderFilterButtons() {
+      const container = document.getElementById('filterButtonGroup');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const activeProductKeys = [];
+      for (const k in products) {
+        let hasCount = false;
+        getVariants(products[k]).forEach(v => {
+          const val = productionTargets[`${k}_${v}`] || 0;
+          if (val > 0) hasCount = true;
+        });
+        if (hasCount) activeProductKeys.push(k);
+      }
+
+      const opts = [{ id: 'all', label: 'Semua Menu' }];
+      activeProductKeys.forEach(k => {
+        opts.push({ id: k, label: `${products[k].icon} ${products[k].name}` });
+      });
+
+      if (!opts.some(o => o.id === selectedFilter)) selectedFilter = 'all';
+
+      if (opts.length === 1 && activeProductKeys.length === 0) {
+        container.innerHTML = '<span class="text-xs text-gray-400 italic py-1 px-1">Isi target produksi di atas untuk memunculkan pilihan filter menu.</span>';
+        return;
+      }
+
+      opts.forEach(opt => {
+        const isSel = (selectedFilter === opt.id);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = isSel
+          ? "shrink-0 py-1.5 px-3.5 rounded-full text-[11px] font-bold bg-[#7D8F7B] text-white shadow-xs cursor-pointer"
+          : "shrink-0 py-1.5 px-3 rounded-full text-[11px] font-semibold bg-white text-[#5A6558] cursor-pointer hover:bg-gray-100";
+        btn.innerText = opt.label;
+        btn.onclick = () => {
+          selectedFilter = opt.id;
+          renderFilterButtons();
+          calculateIngredients();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    window.calculateIngredients = function() {
+      let totalDrinks = 0, totalFoods = 0;
+      const bottleCounts = { '150ml': 0, '250ml': 0, '500ml': 0, '1L': 0 };
+      const drinksAggregated = {}, foodsAggregated = {}, pkgAggregated = {};
+
+      const keysToProcess = (selectedFilter === 'all') ? Object.keys(products) : [selectedFilter];
+
+      for (const k of Object.keys(products)) {
+        const item = products[k];
+        getVariants(item).forEach(v => {
+          const count = productionTargets[`${k}_${v}`] || 0;
+          if (count > 0) {
+            if (item.category === 'Minuman') {
+              totalDrinks += count;
+              bottleCounts[v] = (bottleCounts[v] || 0) + count;
+            } else if (item.category === 'Makanan') {
+              totalFoods += count;
+            }
+          }
+        });
+      }
+
+      keysToProcess.forEach(k => {
+        const item = products[k];
+        getVariants(item).forEach(v => {
+          const count = productionTargets[`${k}_${v}`] || 0;
+          if (count > 0) {
+            const res = calcProductIngredients(k, count, v);
+            const targetObj = (item.category === 'Minuman') ? drinksAggregated : foodsAggregated;
+            for (const ing in res) {
+              if (!targetObj[ing]) targetObj[ing] = { qty: 0, unit: res[ing].unit, isNote: res[ing].isNote };
+              targetObj[ing].qty += res[ing].qty;
+            }
+
+            const resPkg = calcProductPackaging(k, count, v);
+            for (const p in resPkg) {
+              if (!pkgAggregated[p]) pkgAggregated[p] = { qty: 0, unit: resPkg[p].unit };
+              pkgAggregated[p].qty += resPkg[p].qty;
+            }
+          }
+        });
+      });
+
+      const summaryParts = [];
+      if (totalDrinks > 0) {
+        const activeSizes = [];
+        ['150ml', '250ml', '500ml', '1L'].forEach(sz => {
+          if (bottleCounts[sz] > 0) activeSizes.push(`${sz}: ${bottleCounts[sz]}`);
+        });
+        if (activeSizes.length > 0) summaryParts.push(`Botol: ${activeSizes.join(', ')}`);
+      }
+      if (totalFoods > 0) summaryParts.push(`Makanan: ${totalFoods} porsi`);
+      summaryParts.push(`Total pesanan: ${totalDrinks + totalFoods} item`);
+
+      const summaryEl = document.getElementById('totalSummaryDisplay');
+      if (summaryEl) summaryEl.innerText = summaryParts.join(' | ');
+
+      const ingContainer = document.getElementById('ingredientsList');
+      if (!ingContainer) return;
+      ingContainer.innerHTML = '';
+
+      const dKeys = Object.keys(drinksAggregated);
+      const fKeys = Object.keys(foodsAggregated);
+      const pKeys = Object.keys(pkgAggregated);
+
+      if (dKeys.length === 0 && fKeys.length === 0 && pKeys.length === 0) {
+        ingContainer.innerHTML = '<p class="text-center py-6 text-xs text-gray-400">Target produksi masih 0.<br>Masukkan target di atas atau pilih pesanan di Kasir.</p>';
+        return;
+      }
+
+      function renderRow(name, data, isPkg = false) {
+        const valStr = (data.qty % 1 === 0) ? data.qty.toLocaleString('id-ID') : data.qty.toFixed(2).replace('.', ',');
+        return `
+          <div class="py-2 flex justify-between items-center">
+            <span class="${isPkg ? 'text-[#8F6B2D] font-medium' : 'text-[#4A5647] font-medium'}">${name}</span>
+            <span class="font-bold ${isPkg ? 'text-[#8F6B2D]' : 'text-[#2C352B]'}">${valStr} ${data.unit}</span>
+          </div>
+        `;
+      }
+
+      if (dKeys.length > 0) {
+        let html = `
+          <div class="space-y-1">
+            <div class="flex items-center space-x-2 py-1 px-2.5 bg-[#EAE8DF] rounded-xl">
+              <span class="text-xs">🧋</span>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-[#4A5647]">Bahan Baku Minuman</span>
+            </div>
+            <div class="divide-y divide-[#EFECE6] pl-1 pr-1">
+        `;
+        dKeys.forEach(k => { html += renderRow(k, drinksAggregated[k]); });
+        html += `</div></div>`;
+        ingContainer.innerHTML += html;
+      }
+
+      if (fKeys.length > 0) {
+        let html = `
+          <div class="space-y-1 ${dKeys.length > 0 ? 'pt-2' : ''}">
+            <div class="flex items-center space-x-2 py-1 px-2.5 bg-[#EAE8DF] rounded-xl">
+              <span class="text-xs">🥪</span>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-[#4A5647]">Bahan Baku Makanan</span>
+            </div>
+            <div class="divide-y divide-[#EFECE6] pl-1 pr-1">
+        `;
+        fKeys.forEach(k => { html += renderRow(k, foodsAggregated[k]); });
+        html += `</div></div>`;
+        ingContainer.innerHTML += html;
+      }
+
+      if (pKeys.length > 0) {
+        let html = `
+          <div class="space-y-1 pt-2">
+            <div class="flex items-center space-x-2 py-1 px-2.5 bg-[#F4EFE4] rounded-xl">
+              <span class="text-xs">📦</span>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-[#8F6B2D]">Packaging & Kemasan</span>
+            </div>
+            <div class="divide-y divide-[#EFECE6] pl-1 pr-1">
+        `;
+        pKeys.forEach(k => { html += renderRow(k, pkgAggregated[k], true); });
+        html += `</div></div>`;
+        ingContainer.innerHTML += html;
+      }
+    }
+
+    // ==========================================
+    // TAB 3: PRODUK & RESEP
+    // ==========================================
+    function renderProductsManageList() {
+      const container = document.getElementById('productsManageList');
+      if (!container) return;
+      container.innerHTML = '';
+
+      for (const k in products) {
+        const item = products[k];
+        container.innerHTML += `
+          <div class="card-borderless p-4 rounded-3xl flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+              <span class="text-2xl">${item.icon}</span>
+              <div>
+                <h4 class="font-bold text-xs text-[#2C352B]">${item.name}</h4>
+                <p class="text-[10px] text-gray-400">${item.category} • ${item.subCat}</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button onclick="openRecipeModal('${k}')" type="button" class="bg-[#F4F3EE] hover:bg-[#EAE8DF] text-[#5A6558] px-3 py-1.5 rounded-xl text-[10px] font-bold cursor-pointer">
+                ✏️ Edit Resep
+              </button>
+              <button onclick="deleteProduct('${k}')" type="button" class="text-red-400 hover:text-red-600 font-bold text-xs p-1 cursor-pointer">✕</button>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    window.openRecipeModal = function(key) {
+      editingProductKey = key;
+      const item = products[key];
+      document.getElementById('editRecipeModalTitle').innerText = `Resep: ${item.name}`;
+      
+      const container = document.getElementById('editRecipeInputs');
+      container.innerHTML = '';
+
+      for (const ing in item.recipe) {
+        const r = item.recipe[ing];
+        container.innerHTML += `
+          <div class="flex justify-between items-center py-1.5 border-b border-gray-100">
+            <span class="font-semibold text-[11px] text-[#2C352B]">${ing}</span>
+            <div class="flex items-center space-x-1.5">
+              <input type="number" step="0.01" id="rec_${sanitizeKey(ing)}" value="${r.qty}" class="w-16 p-1 border rounded-lg text-center font-bold text-xs outline-none bg-[#F9F8F5]">
+              <span class="text-[10px] text-gray-500 w-8">${r.unit}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById('editRecipeModal').style.display = 'flex';
+    };
+
+    window.closeRecipeModal = function() {
+      document.getElementById('editRecipeModal').style.display = 'none';
+      editingProductKey = null;
+    };
+
+    window.saveRecipeModal = function() {
+      if (!editingProductKey) return;
+      const item = products[editingProductKey];
+
+      for (const ing in item.recipe) {
+        const inp = document.getElementById(`rec_${sanitizeKey(ing)}`);
+        if (inp) {
+          item.recipe[ing].qty = parseFloat(inp.value) || 0;
+        }
+      }
+
+      closeRecipeModal();
+      calculateIngredients();
+      renderFinanceDashboard();
+      alert(`Resep menu ${item.name} berhasil diperbarui!`);
+    };
+
+    window.openProductModal = function() {
+      document.getElementById('mProdName').value = '';
+      document.getElementById('mProdIcon').value = '✨';
+      document.getElementById('mProdPrice').value = '15000';
+      document.getElementById('mProdRecipe').value = 'Susu UHT: 150 ml\nBubuk Green Tea: 5.5 gr';
+      document.getElementById('productModal').style.display = 'flex';
+    };
+
+    window.closeProductModal = function() {
+      document.getElementById('productModal').style.display = 'none';
+    };
+
+    window.saveProductModal = function() {
+      const name = document.getElementById('mProdName').value.trim();
+      const cat = document.getElementById('mProdCategory').value;
+      const icon = document.getElementById('mProdIcon').value.trim() || '✨';
+      const type = document.getElementById('mProdType').value;
+      const price = parseInt(document.getElementById('mProdPrice').value) || 15000;
+      const rawRecipe = document.getElementById('mProdRecipe').value.trim();
+
+      if (!name) { alert('Nama produk wajib diisi!'); return; }
+
+      const parsedRecipe = {};
+      rawRecipe.split('\n').forEach(l => {
+        const parts = l.split(':');
+        if (parts.length === 2) {
+          const ingName = parts[0].trim();
+          const match = parts[1].trim().match(/^([\d.]+)\s*(\w+)/);
+          if (match) {
+            parsedRecipe[ingName] = { qty: parseFloat(match[1]), unit: match[2] };
+            if (!inventoryStock[ingName]) {
+              inventoryStock[ingName] = { stock: 500, unit: match[2], packagePrice: 50, packageQty: 1, packageUnit: match[2], costPerBase: 50, supplier: 'Supplier Baru', phone: '', link: '' };
+            }
+          }
+        }
+      });
+
+      const key = 'custom_' + Date.now();
+      const newPrices = {}, newOrders = {};
+      if (type === 'size') {
+        Object.keys(SIZES).forEach(sz => {
+          newPrices[sz] = Math.round(price * SIZES[sz].factor);
+          newOrders[sz] = 0;
+        });
+      } else if (type === 'meat') {
+        MEATS.forEach(m => { newPrices[m] = price; newOrders[m] = 0; });
+      } else {
+        newPrices['Reguler'] = price;
+        newOrders['Reguler'] = 0;
+      }
+
+      products[key] = {
+        name: name, subCat: (cat === 'Minuman' ? 'tea' : 'makanan'), category: cat,
+        type: type, icon: icon, curVar: (type === 'size' ? '250ml' : (type === 'meat' ? 'Ayam' : 'Reguler')),
+        prices: newPrices, orders: newOrders, recipe: parsedRecipe
+      };
+
+      closeProductModal();
+      renderPosGrid();
+      renderTargetInputs();
+      renderFilterButtons();
+      renderProductsManageList();
+      alert(`Menu ${name} berhasil ditambahkan!`);
+    };
+
+    window.deleteProduct = function(k) {
+      if (confirm(`Yakin ingin menghapus menu ${products[k].name}?`)) {
+        delete products[k];
+        renderPosGrid();
+        renderTargetInputs();
+        renderFilterButtons();
+        renderProductsManageList();
+      }
+    };
+
+    // ==========================================
+    // TAB 4: INVENTORY
+    // ==========================================
+    function sanitizeKey(str) {
+      return str.replace(/[^a-zA-Z0-9]/g, '_');
+    }
+
+    function renderInventoryList() {
+      const container = document.getElementById('inventoryTableList');
+      if (!container) return;
+      container.innerHTML = '';
+
+      for (const ing in inventoryStock) {
+        const item = inventoryStock[ing];
+        const costBase = item.costPerBase !== undefined ? item.costPerBase : (item.packagePrice / (item.packageQty || 1));
+        const linkBtn = item.link 
+          ? `<a href="${item.link}" target="_blank" class="px-2 py-0.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-bold">🛒 Beli Online</a>` 
+          : '';
+        const waBtn = item.phone
+          ? `<a href="https://wa.me/${item.phone}?text=Halo%20${encodeURIComponent(item.supplier || '')},%20mau%20order%20stok%20${encodeURIComponent(ing)}" target="_blank" class="px-2 py-0.5 rounded-lg bg-green-50 hover:bg-green-100 text-green-700 text-[10px] font-bold">💬 Chat WA</a>`
+          : '';
+
+        container.innerHTML += `
+          <div class="py-3 space-y-1.5">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="font-bold text-[#2C352B] text-xs">${ing}</span>
+                <p class="text-[10px] text-gray-500">Supplier: <strong>${item.supplier || '-'}</strong> ${item.phone ? `(${item.phone})` : ''}</p>
+                <p class="text-[10px] text-brass font-semibold">
+                  Beli: Rp ${(item.packagePrice || 0).toLocaleString('id-ID')} / ${item.packageQty || 1} ${item.packageUnit || item.unit}
+                  <span class="text-gray-400 font-normal">→ Rp ${costBase.toFixed(1).replace('.0', '')}/${item.unit}</span>
+                </p>
+              </div>
+              <div class="text-right">
+                <span class="text-xs font-black text-[#52604E]">${item.stock} ${item.unit}</span>
+                <span class="block text-[9px] text-gray-400 uppercase font-semibold">Tersedia</span>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2 pt-0.5">
+              ${linkBtn}
+              ${waBtn}
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    window.openStockModal = function() {
+      const c = document.getElementById('stockModalInputs');
+      c.innerHTML = '';
+
+      for (const ing in inventoryStock) {
+        const it = inventoryStock[ing];
+        const safeId = sanitizeKey(ing);
+        const pkgPrice = it.packagePrice !== undefined ? it.packagePrice : (it.price || 0);
+        const pkgQty = it.packageQty || 1;
+        const pkgUnit = it.packageUnit || it.unit;
+
+        c.innerHTML += `
+          <div class="p-3 bg-[#F6F5F0] rounded-2xl space-y-2 border border-gray-200/60">
+            <div class="flex justify-between items-center border-b border-gray-200 pb-1">
+              <span class="font-bold text-xs text-[#2C352B] truncate">${ing}</span>
+              <span class="text-[10px] bg-white px-2 py-0.5 rounded-md font-semibold text-gray-500 border border-gray-200">Resep: ${it.unit}</span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="block text-[9px] font-bold text-gray-500">Stok Fisik</label>
+                <input type="number" id="stk_${safeId}" value="${it.stock}" class="w-full p-1.5 rounded-xl text-center font-bold text-xs bg-white border border-gray-200 outline-none">
+              </div>
+              <div>
+                <label class="block text-[9px] font-bold text-gray-500">Harga Beli (Rp)</label>
+                <input type="number" id="prc_${safeId}" value="${pkgPrice}" class="w-full p-1.5 rounded-xl text-center font-bold text-xs bg-white border border-gray-200 text-brass outline-none">
+              </div>
+              <div>
+                <label class="block text-[9px] font-bold text-gray-500">Per Isi Kemasan</label>
+                <div class="flex space-x-1">
+                  <input type="number" id="pkgq_${safeId}" value="${pkgQty}" class="w-12 p-1.5 rounded-xl text-center font-bold text-xs bg-white border border-gray-200 outline-none">
+                  <select id="pkgu_${safeId}" class="w-full p-1 text-[10px] font-semibold rounded-xl bg-white border border-gray-200 outline-none">
+                    <option value="ml" ${pkgUnit === 'ml' ? 'selected' : ''}>ml</option>
+                    <option value="L" ${pkgUnit === 'L' ? 'selected' : ''}>L</option>
+                    <option value="gr" ${pkgUnit === 'gr' ? 'selected' : ''}>gr</option>
+                    <option value="kg" ${pkgUnit === 'kg' ? 'selected' : ''}>kg</option>
+                    <option value="butir" ${pkgUnit === 'butir' ? 'selected' : ''}>butir</option>
+                    <option value="lembar" ${pkgUnit === 'lembar' ? 'selected' : ''}>lembar</option>
+                    <option value="pcs" ${pkgUnit === 'pcs' ? 'selected' : ''}>pcs</option>
+                    <option value="bh" ${pkgUnit === 'bh' ? 'selected' : ''}>bh</option>
+                    <option value="set" ${pkgUnit === 'set' ? 'selected' : ''}>set</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-1 border-t border-gray-200/60">
+              <div>
+                <label class="block text-[9px] font-medium text-gray-500">Nama Supplier</label>
+                <input type="text" id="sup_${safeId}" value="${it.supplier || ''}" placeholder="Cth: Toko Sembako" class="w-full p-1.5 rounded-xl text-xs bg-white border border-gray-200 outline-none font-semibold">
+              </div>
+              <div>
+                <label class="block text-[9px] font-medium text-gray-500">No. WhatsApp</label>
+                <input type="text" id="phn_${safeId}" value="${it.phone || ''}" placeholder="628123456xxx" class="w-full p-1.5 rounded-xl text-xs bg-white border border-gray-200 outline-none">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[9px] font-medium text-gray-500">Link Online / E-Commerce (Opsional)</label>
+              <input type="text" id="lnk_${safeId}" value="${it.link || ''}" placeholder="https://tokopedia.com/..." class="w-full p-1.5 rounded-xl text-xs bg-white border border-gray-200 outline-none text-blue-600">
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById('stockModal').style.display = 'flex';
+    };
+
+    window.closeStockModal = function() {
+      document.getElementById('stockModal').style.display = 'none';
+    };
+
+    window.saveStockModal = function() {
+      for (const ing in inventoryStock) {
+        const safeId = sanitizeKey(ing);
+        const sEl = document.getElementById(`stk_${safeId}`);
+        const pEl = document.getElementById(`prc_${safeId}`);
+        const qEl = document.getElementById(`pkgq_${safeId}`);
+        const uEl = document.getElementById(`pkgu_${safeId}`);
+        const supEl = document.getElementById(`sup_${safeId}`);
+        const phnEl = document.getElementById(`phn_${safeId}`);
+        const lnkEl = document.getElementById(`lnk_${safeId}`);
+
+        if (sEl) inventoryStock[ing].stock = parseFloat(sEl.value) || 0;
+        
+        const packagePrice = pEl ? (parseFloat(pEl.value) || 0) : 0;
+        let packageQty = qEl ? (parseFloat(qEl.value) || 1) : 1;
+        const packageUnit = uEl ? uEl.value : inventoryStock[ing].unit;
+
+        let factor = 1;
+        if (packageUnit === 'L' && inventoryStock[ing].unit === 'ml') factor = 1000;
+        if (packageUnit === 'kg' && inventoryStock[ing].unit === 'gr') factor = 1000;
+
+        const effectiveBaseQty = packageQty * factor;
+        const costPerBase = effectiveBaseQty > 0 ? (packagePrice / effectiveBaseQty) : 0;
+
+        inventoryStock[ing].packagePrice = packagePrice;
+        inventoryStock[ing].packageQty = packageQty;
+        inventoryStock[ing].packageUnit = packageUnit;
+        inventoryStock[ing].costPerBase = costPerBase;
+        inventoryStock[ing].price = costPerBase;
+
+        if (supEl) inventoryStock[ing].supplier = supEl.value.trim();
+        if (phnEl) inventoryStock[ing].phone = phnEl.value.trim();
+        if (lnkEl) inventoryStock[ing].link = lnkEl.value.trim();
+      }
+
+      closeStockModal();
+      renderInventoryList();
+      renderFinanceDashboard();
+      alert('Data stok, supplier, dan kalkulasi satuan HPP berhasil diperbarui!');
+    };
+
+    // ==========================================
+    // TAB 5: KEUANGAN (HPP ENGINE)
+    // ==========================================
+    function calculateProductCOGS(prodKey, variant) {
+      const ings = calcProductIngredients(prodKey, 1, variant);
+      let cogs = 0;
+      for (const ing in ings) {
+        if (!ings[ing].isNote && inventoryStock[ing]) {
+          const unitCost = inventoryStock[ing].costPerBase !== undefined 
+            ? inventoryStock[ing].costPerBase 
+            : (inventoryStock[ing].price || 0);
+          cogs += (ings[ing].qty * unitCost);
+        }
+      }
+
+      const pkgs = calcProductPackaging(prodKey, 1, variant);
+      for (const p in pkgs) {
+        if (inventoryStock[p]) {
+          const pkgCost = inventoryStock[p].costPerBase !== undefined 
+            ? inventoryStock[p].costPerBase 
+            : (inventoryStock[p].price || 0);
+          cogs += (pkgs[p].qty * pkgCost);
+        }
+      }
+
+      return cogs;
+    }
+
+    window.checkoutAndSaveTransaction = function() {
+      let tQ = 0, tP = 0, tCOGS = 0;
+      const orderSummary = [];
+
+      for (const k in products) {
+        for (const v in products[k].orders) {
+          const q = products[k].orders[v];
+          if (q > 0) {
+            tQ += q;
+            const price = products[k].prices[v] || 0;
+            const subtotal = q * price;
+            const itemCogs = calculateProductCOGS(k, v) * q;
+            tP += subtotal;
+            tCOGS += itemCogs;
+            orderSummary.push(`${products[k].name} [${v}] x${q}`);
+          }
+        }
+      }
+
+      if (tQ === 0) {
+        alert('Keranjang Kasir masih kosong!');
+        return;
+      }
+
+      const txRecord = {
+        id: 'TX-' + Date.now().toString().slice(-6),
+        time: new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' }),
+        desc: orderSummary.join(', '),
+        revenue: tP,
+        cogs: tCOGS,
+        profit: tP - tCOGS
+      };
+
+      transactions.unshift(txRecord);
+      alert('Transaksi diselesaikan dan otomatis dicatat ke Laporan Keuangan!');
+      resetPos();
+      renderFinanceDashboard();
+    };
+
+    function renderFinanceDashboard() {
+      let totRev = 0, totHpp = 0;
+      const histList = document.getElementById('financeHistoryList');
+      if (!histList) return;
+      histList.innerHTML = '';
+
+      if (transactions.length === 0) {
+        histList.innerHTML = '<p class="text-center text-gray-400 py-4">Belum ada transaksi yang diselesaikan.</p>';
+      } else {
+        transactions.forEach(tx => {
+          totRev += tx.revenue;
+          totHpp += tx.cogs;
+          histList.innerHTML += `
+            <div class="p-2.5 bg-[#F6F5F0] rounded-xl flex justify-between items-center">
+              <div>
+                <span class="font-bold text-[#2C352B]">${tx.id} (${tx.time})</span>
+                <p class="text-[10px] text-gray-500">${tx.desc}</p>
+              </div>
+              <div class="text-right">
+                <span class="font-bold text-xs text-[#2C352B]">Rp ${tx.revenue.toLocaleString('id-ID')}</span>
+                <span class="block text-[9px] text-green-700 font-bold">+Laba Rp ${tx.profit.toLocaleString('id-ID')}</span>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      const profit = totRev - totHpp;
+      const margin = totRev > 0 ? ((profit / totRev) * 100).toFixed(1) : 0;
+
+      document.getElementById('finRevenueDisplay').innerText = 'Rp ' + totRev.toLocaleString('id-ID');
+      document.getElementById('finHppDisplay').innerText = 'Rp ' + totHpp.toLocaleString('id-ID');
+      document.getElementById('finProfitDisplay').innerText = 'Rp ' + profit.toLocaleString('id-ID');
+      document.getElementById('finMarginDisplay').innerText = margin + '%';
+    }
+
+    // ==========================================
+    // INVOICE & STRUK
+    // ==========================================
+    window.openInvoiceModal = function() {
+      let tQ = 0, subtotal = 0;
+      const tbody = document.getElementById('invItemsBody');
+      tbody.innerHTML = '';
+      let no = 1;
+
+      for (const k in products) {
+        for (const v in products[k].orders) {
+          const q = products[k].orders[v];
+          if (q > 0) {
+            tQ += q;
+            const price = products[k].prices[v] || 0;
+            const lineTotal = q * price;
+            subtotal += lineTotal;
+            const desc = products[k].type === 'single' ? products[k].name : `${products[k].name} (${v})`;
+            
+            tbody.innerHTML += `
+              <tr>
+                <td class="text-center font-bold text-gray-500">${no++}.</td>
+                <td><input type="text" class="inv-input-clean w-full font-semibold text-xs" value="${desc}"></td>
+                <td class="text-center"><input type="number" min="1" class="inv-input-clean w-12 text-center font-bold text-xs" value="${q}" oninput="updateLineTotal(this, ${price})"></td>
+                <td class="text-right font-medium text-xs">Rp ${price.toLocaleString('id-ID')}</td>
+                <td class="text-right font-bold text-xs line-total-cell" data-price="${price}">Rp ${lineTotal.toLocaleString('id-ID')}</td>
+              </tr>
+            `;
+          }
+        }
+      }
+
+      if (tQ === 0) {
+        alert('Pilih pesanan di Kasir terlebih dahulu untuk membuat invoice!');
+        return;
+      }
+
+      for (let i = no; i <= 3; i++) {
+        tbody.innerHTML += `
+          <tr>
+            <td class="text-center text-gray-300">${i}.</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+        `;
+      }
+
+      const today = new Date();
+      const dd = String(today.getDate()).padStart(2, '0');
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const yyyy = today.getFullYear();
+      
+      const due = new Date();
+      due.setDate(today.getDate() + 7);
+      const dueDd = String(due.getDate()).padStart(2, '0');
+      const dueMm = String(due.getMonth() + 1).padStart(2, '0');
+
+      document.getElementById('invDate').value = `${dd}/${mm}/${yyyy}`;
+      document.getElementById('invDueDate').value = `${dueDd}/${dueMm}/${yyyy}`;
+      document.getElementById('invNumber').value = `DLC/${yyyy}${mm}${dd}/${Date.now().toString().slice(-4)}`;
+
+      document.getElementById('invSubtotal').innerText = 'Rp ' + subtotal.toLocaleString('id-ID');
+      recalcInvoice();
+      document.getElementById('invoiceModal').style.display = 'flex';
+    };
+
+    window.closeInvoiceModal = function() {
+      document.getElementById('invoiceModal').style.display = 'none';
+    };
+
+    window.updateLineTotal = function(inputEl, price) {
+      const row = inputEl.closest('tr');
+      const qty = parseInt(inputEl.value) || 0;
+      const cell = row.querySelector('.line-total-cell');
+      if (cell) {
+        cell.innerText = 'Rp ' + (qty * price).toLocaleString('id-ID');
+      }
+      recalcInvoice();
+    };
+
+    window.recalcInvoice = function() {
+      let sub = 0;
+      document.querySelectorAll('.line-total-cell').forEach(cell => {
+        const text = cell.innerText.replace(/[^\d]/g, '');
+        sub += parseInt(text) || 0;
+      });
+
+      const ship = parseFloat(document.getElementById('invShipping').value) || 0;
+      const extra = parseFloat(document.getElementById('invExtra').value) || 0;
+      const disc = parseFloat(document.getElementById('invDiscount').value) || 0;
+      const tot = Math.max(0, sub + ship + extra - disc);
+
+      document.getElementById('invSubtotal').innerText = 'Rp ' + sub.toLocaleString('id-ID');
+      document.getElementById('invTotalAmount').innerText = 'Rp ' + tot.toLocaleString('id-ID');
+    };
+
+    function buildReceiptView() {
+      let grandTotal = 0, totalQty = 0;
+      const container = document.getElementById('rcpItemsList');
+      if (!container) return;
+      container.innerHTML = '';
+      const itemsList = [];
+
+      for (const k in products) {
+        const item = products[k];
+        for (const v in item.orders) {
+          const q = item.orders[v];
+          if (q > 0) {
+            totalQty += q;
+            const subtotal = q * (item.prices[v] || 0);
+            grandTotal += subtotal;
+            const vLabel = item.type === 'single' ? '' : ` [${v}]`;
+            itemsList.push({ name: item.name, size: v, isSingle: item.type === 'single', qty: q, price: item.prices[v] || 0, subtotal: subtotal });
+            container.innerHTML += `
+              <div class="flex justify-between items-center">
+                <span>${item.name}${vLabel} <strong class="text-brass">x${q}</strong></span>
+                <span class="font-bold">Rp ${subtotal.toLocaleString('id-ID')}</span>
+              </div>
+            `;
+          }
+        }
+      }
+
+      const randId = 'DLC-' + Date.now().toString().slice(-6);
+      const curDate = new Date().toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+      if (totalQty === 0) {
+        container.innerHTML = '<p class="text-center text-gray-400 py-3">Belum ada item dipilih di Kasir</p>';
+        document.getElementById('rcpId').innerText = '-';
+        document.getElementById('rcpDate').innerText = curDate;
+        document.getElementById('rcpTotal').innerText = 'Rp 0';
+        lastReceiptData = null;
+        return;
+      }
+
+      document.getElementById('rcpId').innerText = randId;
+      document.getElementById('rcpDate').innerText = curDate;
+      document.getElementById('rcpTotal').innerText = 'Rp ' + grandTotal.toLocaleString('id-ID');
+      lastReceiptData = { id: randId, date: curDate, items: itemsList, total: grandTotal };
+    }
+
+    window.printKitchenChecker = function() {
+      buildReceiptView();
+      if (!lastReceiptData || lastReceiptData.items.length === 0) {
+        alert('Pilih minimal 1 menu di Kasir terlebih dahulu!');
+        return;
+      }
+
+      const now = new Date();
+      document.getElementById('delivCustomer').value = '';
+      document.getElementById('delivLocation').value = '';
+      document.getElementById('delivDate').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      document.getElementById('delivTime').value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      document.getElementById('delivNotes').value = '';
+      document.getElementById('deliveryScheduleModal').style.display = 'flex';
+    };
+
+    window.closeDeliveryModal = function() {
+      document.getElementById('deliveryScheduleModal').style.display = 'none';
+    };
+
+    window.confirmAndPrintChecker = async function() {
+      const customer = document.getElementById('delivCustomer').value.trim() || 'Pelanggan Walk-In';
+      const location = document.getElementById('delivLocation').value.trim() || 'Area Bar / Takeaway';
+      const dDate = document.getElementById('delivDate').value;
+      const dTime = document.getElementById('delivTime').value;
+      const notes = document.getElementById('delivNotes').value.trim();
+
+      closeDeliveryModal();
+      const dateObj = new Date(dDate + 'T' + dTime);
+      const formattedSchedule = isNaN(dateObj) ? `${dDate} ${dTime}` : dateObj.toLocaleDateString('id-ID', {
+        day: '2-digit', month: 'short', year: 'numeric'
+      }) + ' ' + dTime + ' WIB';
+
+      const checkerPayload = {
+        ...lastReceiptData,
+        customer: customer,
+        location: location,
+        deliverySchedule: formattedSchedule,
+        notes: notes
+      };
+
+      await executeThermalPrint(checkerPayload, true);
+    };
+
+    /* ============ PATCH B: RECEIPT 32/42/48 KOLOM ============ */
+function buildReceiptTicketData(data) {
+  const ESC = '\x1B';
+  const GS  = '\x1D';
+
+  // Lebar kertas: 32 (58mm) | 42 (80mm font normal) | 48 (80mm font kecil)
+  const width = (window.PRINTER_WIDTH === 48 || window.PRINTER_WIDTH === 42) ? window.PRINTER_WIDTH : 32;
+  const line = '-'.repeat(width);
+
+  // Build 2-kolom kiri/kanan, padding otomatis
+  function twoCol(left, right) {
+    const sp = width - left.length - right.length;
+    if (sp <= 0) {
+      // Kalau kepanjangan, turun 1 baris: kiri \n kanan (rata kanan)
+      return left + '\n' + ' '.repeat(Math.max(0, width - right.length)) + right;
+    }
+    return left + ' '.repeat(sp) + right;
+  }
+
+  // Center text, pad kalau kurang
+  function center(text) {
+    if (text.length >= width) return text;
+    const pad = Math.floor((width - text.length) / 2);
+    return ' '.repeat(pad) + text;
+  }
+
+  let str = ESC + '@';                    // init
+
+  // Header — judul double size
+  str += ESC + 'a' + '\x01';              // center
+  str += ESC + '!' + '\x38';              // bold + double H + double W
+  str += center('DELICIELO') + '\n';
+  str += ESC + '!' + '\x00';              // reset font
+  str += center('Artisan Food & Beverage') + '\n';
+  str += line + '\n';
+
+  // Meta transaksi — rata kiri
+  str += ESC + 'a' + '\x00';
+  str += 'No : ' + data.id + '\n';
+  str += 'Tgl: ' + data.date + '\n';
+  str += line + '\n';
+
+  // Item list
+  data.items.forEach(function(it) {
+    var v = it.isSingle ? '' : ' [' + it.size + ']';
+    str += it.name + v + '\n';
+
+    var left  = '  ' + it.qty + ' x ' + it.price.toLocaleString('id-ID');
+    var right = 'Rp ' + it.subtotal.toLocaleString('id-ID');
+    str += twoCol(left, right) + '\n';
+  });
+
+  str += line + '\n';
+
+  // Total — bold
+  str += ESC + '!' + '\x20';              // bold only
+  var totR = 'Rp ' + data.total.toLocaleString('id-ID');
+  var leftTot = 'TOTAL:';
+  var spT = width - leftTot.length - totR.length;
+  str += leftTot + (spT > 0 ? ' '.repeat(spT) : ' ') + totR + '\n';
+  str += ESC + '!' + '\x00';              // reset font
+
+  str += line + '\n';
+
+  // Footer
+  str += ESC + 'a' + '\x01';              // center
+  str += center('Terima kasih atas pesanannya!') + '\n\n\n\n';
+  str += GS + 'V' + '\x41' + '\x00';      // cut
+
+  return new TextEncoder().encode(str);
+}
+window.setPrinterWidth = function(w) {
+  window.PRINTER_WIDTH = w;
+  localStorage.setItem('delicielo_printer_width', String(w));
+
+  var b32 = document.getElementById('btnWidth32');
+  var b42 = document.getElementById('btnWidth42');
+  if (b32 && b42) {
+    var active = 'px-3 py-1 rounded-lg text-[10px] font-bold bg-brass text-white';
+    var inactive = 'px-3 py-1 rounded-lg text-[10px] font-bold bg-white text-[#5A6558] border border-gray-200';
+    b32.className = (w === 32) ? active : inactive;
+    b42.className = (w === 42) ? active : inactive;
+  }
+
+  if (typeof window.showToast === 'function') {
+    window.showToast('📏 Lebar: ' + (w === 32 ? '58mm' : '80mm'));
+  }
+};
+
+// Saat load, sinkronkan tombol
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.PRINTER_WIDTH === 42) window.setPrinterWidth(42);
+});
+
+
+    function buildCheckerTicketData(data) {
+  const ESC = '\x1B';
+  const GS  = '\x1D';
+  const width = (window.PRINTER_WIDTH === 48 || window.PRINTER_WIDTH === 42) ? window.PRINTER_WIDTH : 32;
+  const line = '-'.repeat(width);
+
+  let str = ESC + '@';
+  str += ESC + 'a' + '\x01';
+  str += ESC + '!' + '\x38';
+  str += 'DAPUR\n';
+  str += ESC + '!' + '\x00';
+  str += line + '\n';
+  str += ESC + 'a' + '\x00';
+  str += 'No : ' + data.id + '\n';
+  str += 'Waktu: ' + (data.date || '-') + '\n';
+  str += line + '\n';
+
+  data.items.forEach(function(it) {
+    var v = it.isSingle ? '' : ' [' + it.size + ']';
+    str += '[' + it.qty + 'x] ' + it.name + v + '\n';
+  });
+
+  str += line + '\n';
+  str += '\n\n\n\n';
+  str += GS + 'V' + '\x41' + '\x00';
+
+  return new TextEncoder().encode(str);
+}
+
+
+    /* ============ PATCH A: EXECUTE THERMAL PRINT (v2 - aman) ============ */
+async function executeThermalPrint(data, isChecker = false) {
+  const banner = document.getElementById('posBtBanner');
+  const bannerText = document.getElementById('posBtStatusText');
+  const st = document.getElementById('btStatus');
+
+  function updateStatus(msg) {
+    if (st) st.innerText = msg;
+    if (bannerText) bannerText.innerText = msg;
+    if (banner) banner.classList.remove('hidden');
+  }
+
+  if (!navigator.bluetooth) {
+    updateStatus('❌ Buka web di browser Bluefy (iOS)!');
+    alert('Web Bluetooth hanya didukung lewat browser Bluefy di iPhone/iPad.');
+    return;
+  }
+
+  try {
+    updateStatus('🔍 Menghubungkan ke printer...');
+
+    // === PATCH 1: Cek koneksi lebih ketat ===
+    let device = window.currentBtDevice;
+    let needReconnect = !device || !device.gatt || !device.gatt.connected || !printCharacteristic;
+
+    // Kalau device ada tapi gatt sudah putus, coba auto-reconnect dulu
+    if (!needReconnect && device && device.gatt) {
+      try {
+        if (!device.gatt.connected) {
+          updateStatus('🔄 Menyambung ulang ke printer...');
+          await device.gatt.connect();
+          // Re-detect characteristic
+          const server = await device.gatt.getPrimaryServices();
+          printCharacteristic = null;
+          for (const s of server) {
+            try {
+              const chars = await s.getCharacteristics();
+              for (const c of chars) {
+                if (c.properties.write || c.properties.writeWithoutResponse) {
+                  printCharacteristic = c;
+                  break;
+                }
+              }
+            } catch (e) {}
+            if (printCharacteristic) break;
+          }
+          if (!printCharacteristic) needReconnect = true;
+        }
+      } catch (e) {
+        console.warn('Auto-reconnect gagal:', e);
+        needReconnect = true;
+      }
+    }
+
+    if (needReconnect) {
+      device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: [
+          '000018f0-0000-1000-8000-00805f9b34fb',
+          'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+          '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+          '0000ff00-0000-1000-8000-00805f9b34fb',
+          '0000fff0-0000-1000-8000-00805f9b34fb',
+          '00001801-0000-1000-8000-00805f9b34fb'
+        ]
+      });
+      window.currentBtDevice = device;
+      // Reset characteristic saat ganti device
+      printCharacteristic = null;
+      updateStatus('Tersambung ke ' + (device.name || 'Printer') + ', membaca layanan...');
+      const server = await device.gatt.connect();
+      const services = await server.getPrimaryServices();
+
+      for (const s of services) {
+        try {
+          const chars = await s.getCharacteristics();
+          for (const c of chars) {
+            if (c.properties.write || c.properties.writeWithoutResponse) {
+              printCharacteristic = c;
+              break;
+            }
+          }
+        } catch (e) {}
+        if (printCharacteristic) break;
+      }
+    }
+
+    if (!printCharacteristic) throw new Error('Karakteristik cetak tidak ditemukan.');
+
+    updateStatus(isChecker ? '🍳 Mencetak Tiket Checker Dapur...' : '🖨️ Mencetak Struk Pelanggan...');
+    const dataBytes = isChecker ? buildCheckerTicketData(data) : buildReceiptTicketData(data);
+
+    // === PATCH 2: Chunk size adaptif + error per-chunk ===
+    const CHUNK_SIZE = 20;
+    let bytesSent = 0;
+    for (let i = 0; i < dataBytes.length; i += CHUNK_SIZE) {
+      const chunk = dataBytes.slice(i, i + CHUNK_SIZE);
+      try {
+        if (printCharacteristic.properties.write) {
+          await printCharacteristic.writeValueWithResponse(chunk);
+        } else {
+          await printCharacteristic.writeValue(chunk);
+        }
+        bytesSent += chunk.length;
+        // Update progress kalau transaksi besar
+        if (dataBytes.length > 200 && i % 100 === 0) {
+          updateStatus('🖨️ Mengirim ' + Math.round((bytesSent / dataBytes.length) * 100) + '%...');
+        }
+      } catch (chunkErr) {
+        console.error('Gagal kirim chunk ke-' + i + ':', chunkErr);
+        // Coba sambung ulang sekali
+        if (device && device.gatt && !device.gatt.connected) {
+          updateStatus('🔄 Koneksi terputus, menyambung ulang...');
+          await new Promise(r => setTimeout(r, 500));
+          await device.gatt.connect();
+          // retry chunk ini
+          if (printCharacteristic.properties.write) {
+            await printCharacteristic.writeValueWithResponse(chunk);
+          } else {
+            await printCharacteristic.writeValue(chunk);
+          }
+        } else {
+          throw chunkErr;
+        }
+      }
+      await new Promise(r => setTimeout(r, 25));
+    }
+
+    // === PATCH 3: Sukses dengan toast ===
+    updateStatus('✅ Cetak selesai! (' + bytesSent + ' bytes)');
+    if (typeof window.showToast === 'function') {
+      window.showToast('✅ ' + (isChecker ? 'Tiket dapur' : 'Struk') + ' tercetak');
+    }
+    setTimeout(() => {
+      if (banner) banner.classList.add('hidden');
+    }, 4000);
+
+  } catch (err) {
+    console.error('Thermal print error:', err);
+    updateStatus('❌ ' + (err.message || 'Gagal cetak'));
+    // Kalau user batal milih printer, jangan panic
+    if (err.name === 'NotFoundError' || (err.message && err.message.includes('cancel'))) {
+      updateStatus('Dibatalkan oleh user');
+    } else {
+      alert('Gagal cetak: ' + (err.message || err));
+    }
+  }
+}
+
+
+    window.printBluetooth = async function() {
+      buildReceiptView();
+      if (!lastReceiptData) {
+        alert('Pilih minimal 1 menu di Kasir terlebih dahulu!');
+        return;
+      }
+      await executeThermalPrint(lastReceiptData, false);
+    };
+
+    window.shareWhatsApp = function() {
+      let totalItems = 0;
+      for (const k in products) {
+        getVariants(products[k]).forEach(v => {
+          totalItems += productionTargets[`${k}_${v}`] || 0;
+        });
+      }
+
+      if (totalItems === 0) {
+        alert('Target produksi masih 0!');
+        return;
+      }
+
+      let msg = `*RENCANA PRODUKSI DELICIELO*\nFilter: ${selectedFilter === 'all' ? 'Semua Menu' : products[selectedFilter].name}\n\n*Target Menu:*\n`;
+      const drinksAggregated = {}, foodsAggregated = {}, pkgAggregated = {};
+      const keysToProcess = (selectedFilter === 'all') ? Object.keys(products) : [selectedFilter];
+
+      keysToProcess.forEach(k => {
+        const item = products[k];
+        const targetObj = (item.category === 'Minuman') ? drinksAggregated : foodsAggregated;
+        const details = [];
+
+        getVariants(item).forEach(v => {
+          const count = productionTargets[`${k}_${v}`] || 0;
+          if (count > 0) {
+            details.push(item.type === 'single' ? `${count} porsi` : `${v}: ${count} pcs`);
+            const res = calcProductIngredients(k, count, v);
+            for (const ing in res) {
+              if (!targetObj[ing]) targetObj[ing] = { qty: 0, unit: res[ing].unit };
+              targetObj[ing].qty += res[ing].qty;
+            }
+            const resPkg = calcProductPackaging(k, count, v);
+            for (const p in resPkg) {
+              if (!pkgAggregated[p]) pkgAggregated[p] = { qty: 0, unit: resPkg[p].unit };
+              pkgAggregated[p].qty += resPkg[p].qty;
+            }
+          }
+        });
+        if (details.length > 0) msg += `- ${item.name} (${details.join(', ')})\n`;
+      });
+
+      if (Object.keys(drinksAggregated).length > 0) {
+        msg += `\n*Bahan Baku Minuman:*\n`;
+        for (const ing in drinksAggregated) {
+          const d = drinksAggregated[ing];
+          const valStr = (d.qty % 1 === 0 ? d.qty.toLocaleString('id-ID') : d.qty.toFixed(2).replace('.', ','));
+          msg += `- ${ing}: ${valStr} ${d.unit}\n`;
+        }
+      }
+
+      if (Object.keys(foodsAggregated).length > 0) {
+        msg += `\n*Bahan Baku Makanan:*\n`;
+        for (const ing in foodsAggregated) {
+          const d = foodsAggregated[ing];
+          const valStr = (d.qty % 1 === 0 ? d.qty.toLocaleString('id-ID') : d.qty.toFixed(2).replace('.', ','));
+          msg += `- ${ing}: ${valStr} ${d.unit}\n`;
+        }
+      }
+
+      if (Object.keys(pkgAggregated).length > 0) {
+        msg += `\n*Packaging & Kemasan:*\n`;
+        for (const p in pkgAggregated) {
+          const d = pkgAggregated[p];
+          const valStr = (d.qty % 1 === 0 ? d.qty.toLocaleString('id-ID') : d.qty.toFixed(2).replace('.', ','));
+          msg += `- ${p}: ${valStr} ${d.unit}\n`;
+        }
+      }
+
+      window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setRole('GUEST');
+      renderSubCatBar();
+      renderPosGrid();
+      renderTargetInputs();
+      renderFilterButtons();
+      calculateIngredients();
+
+      // Muat Gambar Logo & Footer dari LocalStorage jika sudah pernah diupload
+      const savedLogo = localStorage.getItem('invLogoCustom');
+      const savedFooter = localStorage.getItem('invFooterCustom');
+      if (savedLogo && document.getElementById('invLogoCustom')) {
+        document.getElementById('invLogoCustom').src = savedLogo;
+      }
+      if (savedFooter && document.getElementById('invFooterCustom')) {
+        document.getElementById('invFooterCustom').src = savedFooter;
+      }
+    });
+
+    // Pengatur Ukuran Gambar Dinamis & Persistence
+    function resizeInvImage(targetId, widthPx, storageKey) {
+      const el = document.getElementById(targetId);
+      if (el) {
+        el.style.width = widthPx + 'px';
+        localStorage.setItem(storageKey, widthPx);
+      }
+    }
+
+    // Update bagian DOMContentLoaded untuk memuat ukuran yang tersimpan
+    document.addEventListener('DOMContentLoaded', () => {
+      // (kode inisialisasi yang sudah ada tetap jalan...)
+      
+      const savedLogoSize = localStorage.getItem('invLogoSize');
+      if (savedLogoSize && document.getElementById('invLogoCustom')) {
+        document.getElementById('invLogoCustom').style.width = savedLogoSize + 'px';
+        const sliderLogo = document.getElementById('sliderLogo');
+        if (sliderLogo) sliderLogo.value = savedLogoSize;
+      }
+
+      const savedFooterSize = localStorage.getItem('invFooterSize');
+      if (savedFooterSize && document.getElementById('invFooterCustom')) {
+        document.getElementById('invFooterCustom').style.width = savedFooterSize + 'px';
+        const sliderFooter = document.getElementById('sliderFooter');
+        if (sliderFooter) sliderFooter.value = savedFooterSize;
+      }
+    });
+
+    // Upload & Auto-save ke LocalStorage
+    function loadCustomImage(input, targetId) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const target = document.getElementById(targetId);
+          if (target) {
+            target.src = e.target.result;
+            try {
+              localStorage.setItem(targetId, e.target.result);
+            } catch (err) {
+              console.warn('LocalStorage limit tercapai');
+            }
+          }
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    // Slider Resize Dinamis
+    function resizeInvImage(targetId, widthPx, storageKey) {
+      const el = document.getElementById(targetId);
+      if (el) {
+        el.style.width = widthPx + 'px';
+        localStorage.setItem(storageKey, widthPx);
+      }
+    }
+
+    // Buka Modal & Render Baris Grid Sesuai Gambar Referensi
+    window.openInvoiceModal = function() {
+      let tQ = 0, subtotal = 0;
+      const tbody = document.getElementById('invItemsBody');
+      tbody.innerHTML = '';
+      let no = 1;
+
+      for (const k in products) {
+        for (const v in products[k].orders) {
+          const q = products[k].orders[v];
+          if (q > 0) {
+            tQ += q;
+            const price = products[k].prices[v] || 0;
+            const lineTotal = q * price;
+            subtotal += lineTotal;
+            const desc = products[k].type === 'single' ? products[k].name : `${products[k].name} (${v})`;
+            
+            tbody.innerHTML += `
+              <tr>
+                <td class="text-center font-bold text-gray-600">${no++}.</td>
+                <td><input type="text" class="inv-input-line w-full font-semibold text-xs" value="${desc}"></td>
+                <td class="text-center"><input type="number" min="1" class="inv-input-line w-10 text-center font-bold text-xs" value="${q}" oninput="updateLineTotal(this, ${price})"></td>
+                <td class="text-right font-medium text-xs">Rp ${price.toLocaleString('id-ID')}</td>
+                <td class="text-right font-bold text-xs line-total-cell" data-price="${price}">Rp ${lineTotal.toLocaleString('id-ID')}</td>
+              </tr>
+            `;
+          }
+        }
+      }
+
+      if (tQ === 0) {
+        alert('Pilih pesanan di Kasir terlebih dahulu untuk membuat invoice!');
+        return;
+      }
+
+      // Baris kosong bergaris kisi (grid) agar mirip dengan template referensi
+      for (let i = no; i <= 5; i++) {
+        tbody.innerHTML += `
+          <tr>
+            <td class="text-center text-gray-300 font-bold">${i}.</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+        `;
+      }
+
+      const today = new Date();
+      const dd = String(today.getDate()).padStart(2, '0');
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const yyyy = today.getFullYear();
+      
+      const due = new Date();
+      due.setDate(today.getDate() + 7);
+      const dueDd = String(due.getDate()).padStart(2, '0');
+      const dueMm = String(due.getMonth() + 1).padStart(2, '0');
+
+      document.getElementById('invDate').value = `${dd}/${mm}/${yyyy}`;
+      document.getElementById('invDueDate').value = `${dueDd}/${dueMm}/${yyyy}`;
+      document.getElementById('invNumber').value = `${yyyy}${mm}${dd}/${Date.now().toString().slice(-4)}`;
+
+      document.getElementById('invSubtotal').innerText = 'Rp ' + subtotal.toLocaleString('id-ID');
+      recalcInvoice();
+      document.getElementById('invoiceModal').style.display = 'flex';
+    };
+
+    window.closeInvoiceModal = function() {
+      document.getElementById('invoiceModal').style.display = 'none';
+    };
+
+    window.updateLineTotal = function(inputEl, price) {
+      const row = inputEl.closest('tr');
+      const qty = parseInt(inputEl.value) || 0;
+      const cell = row.querySelector('.line-total-cell');
+      if (cell) {
+        cell.innerText = 'Rp ' + (qty * price).toLocaleString('id-ID');
+      }
+      recalcInvoice();
+    };
+
+    window.recalcInvoice = function() {
+      let sub = 0;
+      document.querySelectorAll('.line-total-cell').forEach(cell => {
+        const text = cell.innerText.replace(/[^\d]/g, '');
+        sub += parseInt(text) || 0;
+      });
+
+      const ship = parseFloat(document.getElementById('invShipping').value) || 0;
+      const disc = parseFloat(document.getElementById('invDiscount').value) || 0;
+      const tot = Math.max(0, sub + ship - disc);
+
+      document.getElementById('invSubtotal').innerText = 'Rp ' + sub.toLocaleString('id-ID');
+      document.getElementById('invTotalAmount').innerText = 'Rp ' + tot.toLocaleString('id-ID');
+    };
+
+    // Muat gambar & ukuran yang pernah disetel saat startup
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedLogo = localStorage.getItem('invLogoCustom');
+      const savedFooter = localStorage.getItem('invFooterCustom');
+      const savedLogoSize = localStorage.getItem('invLogoSize');
+      const savedFooterSize = localStorage.getItem('invFooterSize');
+
+      if (savedLogo && document.getElementById('invLogoCustom')) document.getElementById('invLogoCustom').src = savedLogo;
+      if (savedFooter && document.getElementById('invFooterCustom')) document.getElementById('invFooterCustom').src = savedFooter;
+
+      if (savedLogoSize && document.getElementById('invLogoCustom')) {
+        document.getElementById('invLogoCustom').style.width = savedLogoSize + 'px';
+        const sl = document.getElementById('sliderLogo');
+        if (sl) sl.value = savedLogoSize;
+      }
+      if (savedFooterSize && document.getElementById('invFooterCustom')) {
+        document.getElementById('invFooterCustom').style.width = savedFooterSize + 'px';
+        const sf = document.getElementById('sliderFooter');
+        if (sf) sf.value = savedFooterSize;
+      }
+    });
+/* ============ PATCH: LOGO INVOICE ANTI-HILANG (v2 - aman VSCode) ============ */
+(function(){
+  var DB_NAME = 'delicielo_db';
+  var STORE   = 'images';
+
+  function openDB(){
+    return new Promise(function(res, rej){
+      var req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = function(e){
+        var db = e.target.result;
+        if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+      };
+      req.onsuccess = function(e){ res(e.target.result); };
+      req.onerror   = function(e){ rej(e.target.error); };
+    });
+  }
+  function idbSet(key, val){
+    return openDB().then(function(db){
+      return new Promise(function(res, rej){
+        var tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).put(val, key);
+        tx.oncomplete = function(){ res(); };
+        tx.onerror    = function(e){ rej(e.target.error); };
+      });
+    });
+  }
+  function idbGet(key){
+    return openDB().then(function(db){
+      return new Promise(function(res, rej){
+        var tx = db.transaction(STORE, 'readonly');
+        var r  = tx.objectStore(STORE).get(key);
+        r.onsuccess = function(){ res(r.result); };
+        r.onerror   = function(e){ rej(e.target.error); };
+      });
+    });
+  }
+  function idbDel(key){
+    return openDB().then(function(db){
+      return new Promise(function(res, rej){
+        var tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).delete(key);
+        tx.oncomplete = function(){ res(); };
+        tx.onerror    = function(e){ rej(e.target.error); };
+      });
+    });
+  }
+
+  function compressImage(file, maxSize){
+    maxSize = maxSize || 400;
+    return new Promise(function(resolve, reject){
+      var img = new Image();
+      var url = URL.createObjectURL(file);
+      img.onload = function(){
+        URL.revokeObjectURL(url);
+        var w = img.width, h = img.height;
+        var scale = Math.min(1, maxSize / Math.max(w, h));
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        var isPng = file.type === 'image/png';
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(function(blob){
+          var reader = new FileReader();
+          reader.onload = function(){ resolve({ dataUrl: reader.result, type: isPng ? 'image/png' : 'image/jpeg' }); };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        }, isPng ? 'image/png' : 'image/jpeg', 0.85);
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+  function applyFallback(el){
+    if (!el || el.dataset.fallbackApplied === '1') return;
+    el.dataset.fallbackApplied = '1';
+    el.onerror = null;
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="140" height="110" viewBox="0 0 140 110">' +
+              '<rect width="140" height="110" fill="#FDFCF7"/>' +
+              '<text x="70" y="62" font-family="serif" font-size="18" font-weight="900" fill="#3E4D3C" text-anchor="middle" letter-spacing="2">DELICIELO</text>' +
+              '<line x1="30" y1="72" x2="110" y2="72" stroke="#3E4D3C" stroke-width="1.5"/>' +
+              '</svg>';
+    el.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+  }
+
+  // Override loadCustomImage dengan versi IndexedDB
+  window.loadCustomImage = function(input, targetId){
+    var file = input && input.files && input.files[0];
+    if (!file) return;
+    compressImage(file).then(function(result){
+      return idbSet(targetId, result.dataUrl);
+    }).then(function(){
+      var el = document.getElementById(targetId);
+      if (el){
+        el.src = input.files[0] ? '' : ''; // trigger
+        // baca ulang dari DB biar pasti sinkron
+        return idbGet(targetId).then(function(d){
+          if (d){ el.src = d; delete el.dataset.fallbackApplied; }
+          if (typeof window.showToast === 'function') window.showToast('✅ Gambar tersimpan');
+        });
+      }
+    }).catch(function(err){
+      console.error(err);
+      alert('Gagal simpan gambar: ' + err.message);
+    });
+    input.value = '';
+  };
+
+  function hydrateImage(targetId){
+    idbGet(targetId).then(function(data){
+      var el = document.getElementById(targetId);
+      if (!el) return;
+      if (data){
+        el.src = data;
+        delete el.dataset.fallbackApplied;
+      } else {
+        applyFallback(el);
+      }
+      el.onerror = function(){ applyFallback(el); };
+    }).catch(function(e){
+      console.warn('hydrateImage err', e);
+    });
+  }
+
+  function init(){
+    hydrateImage('invLogoCustom');
+    hydrateImage('invFooterCustom');
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  window.__delicieloDB = { idbGet: idbGet, idbSet: idbSet, idbDel: idbDel };
+})();
+/* ============ PATCH: DOWNLOAD PDF INVOICE (v2 - aman VSCode) ============ */
+window.downloadInvoicePDF = function(){
+  var el = document.getElementById('invoicePrintArea');
+  if (!el){ alert('Area invoice tidak ditemukan'); return; }
+  if (typeof html2pdf === 'undefined'){
+    alert('Library PDF belum termuat. Cek koneksi internet lalu refresh.');
+    return;
+  }
+
+  var btn = event && event.target ? event.target.closest('button') : null;
+  if (btn){ btn.disabled = true; var orig = btn.innerHTML; btn.innerHTML = '⏳ Membuat PDF...'; }
+
+  function restoreBtn(){ if (btn){ btn.disabled = false; btn.innerHTML = orig; } }
+
+  // Tunggu font selesai
+  var fontReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+
+  fontReady.then(function(){
+    // Simpan style asli
+    var prevStyle = el.getAttribute('style') || '';
+    var inputs = el.querySelectorAll('input');
+
+    // Terapkan style PDF bersih
+    el.style.background = '#FFFFFF';
+    el.style.boxShadow  = 'none';
+    el.style.border     = 'none';
+    el.style.maxWidth   = '800px';
+    el.style.width      = '800px';
+    el.style.padding    = '40px';
+
+    inputs.forEach(function(i){
+      i.dataset._bc = i.style.borderBottom;
+      i.style.borderBottom = 'none';
+    });
+
+    var invNo = (document.getElementById('invNumber') || {}).value || String(Date.now());
+    var filename = 'Invoice-Delicielo-' + invNo.replace(/[\/\\:*?"<>|]/g, '-') + '.pdf';
+
+    return html2pdf().set({
+      margin: 0,
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#FFFFFF',
+        logging: false
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }).from(el).save().then(function(){
+      // Kembalikan style asli
+      el.setAttribute('style', prevStyle);
+      inputs.forEach(function(i){
+        i.style.borderBottom = i.dataset._bc || '';
+        delete i.dataset._bc;
+      });
+      restoreBtn();
+    }, function(err){
+      el.setAttribute('style', prevStyle);
+      inputs.forEach(function(i){
+        i.style.borderBottom = i.dataset._bc || '';
+        delete i.dataset._bc;
+      });
+      restoreBtn();
+      throw err;
+    });
+  }).catch(function(err){
+    console.error(err);
+    alert('Gagal buat PDF: ' + (err && err.message ? err.message : err));
+  });
+};
+
+window.printInvoiceNow = function(){
+  window.print();
+};
+
+  </script>
+</body>
+</html>
